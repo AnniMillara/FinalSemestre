@@ -140,7 +140,6 @@ CREATE TABLE sanciones (
     torneo_id INT NOT NULL,
     partida_id INT NULL,
     motivo VARCHAR(255) NOT NULL,
-    fecha_sancion DATE NOT NULL,
     dias_suspension INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

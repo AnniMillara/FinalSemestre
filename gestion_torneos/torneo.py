@@ -1,6 +1,7 @@
+# torneo.py - corregido
 from conexion import Conexion
-from ciudad import ciudad
-from usuarios import usuario
+from ciudad import Ciudad
+from usuarios import Usuario
 from equipos import Equipo
 
 class Torneo:
@@ -17,7 +18,7 @@ class Torneo:
         self.equipos_inscritos = []
         Torneo.torneos_disponibles.append(self)
     
-    def inscribir_equipo(self, equipo):  # Método de instancia
+    def inscribir_equipo(self, equipo):
         if equipo not in self.equipos_inscritos:
             self.equipos_inscritos.append(equipo)
             return f"Equipo {equipo.nombre_equipo} inscrito en {self.nombre_torneo}"
@@ -27,7 +28,6 @@ class Torneo:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # validar organizador como Admin
         cursor.execute("""
             SELECT u.id_usuario, t.nombre_tipo
             FROM usuarios u
@@ -43,7 +43,6 @@ class Torneo:
             conexion.close()
             return
         
-        # Verificar que el tipo sea "Admin"
         if organizador[1].lower() != "admin":
             print(f"\nEl usuario {organizador[1]} no es 'Admin'.")
             print("Solo los usuarios con tipo 'Admin' pueden ser organizadores.")
@@ -51,7 +50,6 @@ class Torneo:
             conexion.close()
             return
         
-        # validar ciudad
         cursor.execute("SELECT id_ciudad FROM ciudades WHERE id_ciudad = %s AND deleted = 0", (self.ciudad_id,))
         if not cursor.fetchone():
             print("\nLa ciudad no existe. Primero debes crear la ciudad.")
@@ -98,11 +96,11 @@ class Torneo:
         print("\n===== NUEVO TORNEO =====")
         
         print("\nCIUDADES DISPONIBLES")
-        ciudad.listar()
+        Ciudad.listar()
         ciudad_id = input("\nID de la ciudad: ")
         
         print("\nORGANIZADORES (usuarios tipo Admin)")
-        usuario.listar_simple()
+        Usuario.listar_simple()
         organizador_id = input("\nID del organizador: ")
         
         nombre = input("Nombre del torneo: ")
@@ -148,17 +146,16 @@ class Torneo:
         
         Equipo.listar()
         id_equipo = input("Ingrese ID del equipo: ")
-        fecha_inscripcion = input("Fecha de inscripción (AAAA-MM-DD): ")
+        fecha_inscripcion = input("Fecha de inscripcion (AAAA-MM-DD): ")
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Verificar que no esté ya inscrito
         cursor.execute("SELECT id_torneo_equipo FROM torneo_equipos WHERE torneo_id = %s AND equipo_id = %s AND deleted = 0", 
                     (id_torneo, id_equipo))
         
         if cursor.fetchone():
-            print("\nError: El equipo ya está inscrito en este torneo.")
+            print("\nEl equipo ya esta inscrito en este torneo.")
             cursor.close()
             conexion.close()
             return
@@ -187,6 +184,169 @@ class Torneo:
         cursor.execute(sql, (id_torneo,))
         conexion.commit()
         print("\nTorneo eliminado correctamente.")
+        
+        cursor.close()
+        conexion.close()
+    
+    @staticmethod
+    def listar_partidas():
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        
+        sql = """
+            SELECT p.id_partida, t.nombre_torneo, eq1.nombre_equipo, eq2.nombre_equipo, 
+                   p.fecha_partida, p.ronda, p.resultado_local, p.resultado_visitante
+            FROM partidas p
+            JOIN torneos t ON p.torneo_id = t.id_torneo
+            JOIN equipos eq1 ON p.equipo_local_id = eq1.id_equipo
+            JOIN equipos eq2 ON p.equipo_visitante_id = eq2.id_equipo
+            WHERE p.deleted = 0
+        """
+        cursor.execute(sql)
+        partidas = cursor.fetchall()
+        
+        print("\n===== PARTIDAS =====")
+        for p in partidas:
+            print(f"ID: {p[0]} | Torneo: {p[1]} | {p[2]} vs {p[3]} | Ronda: {p[5]} | {p[6]}-{p[7]}")
+        
+        cursor.close()
+        conexion.close()
+    
+    @staticmethod
+    def agregar_partida():
+        Torneo.listar()
+        id_torneo = input("\nID del torneo: ")
+        
+        Equipo.listar()
+        id_local = input("ID equipo local: ")
+        id_visitante = input("ID equipo visitante: ")
+        
+        fecha = input("Fecha y hora (AAAA-MM-DD HH:MM:SS): ")
+        ronda = input("Ronda: ")
+        resultado_local = input("Resultado local: ")
+        resultado_visitante = input("Resultado visitante: ")
+        duracion = input("Duracion (minutos): ")
+        
+        ganador_id = input("ID del ganador (0 si no aplica): ")
+        if ganador_id == "0":
+            ganador_id = None
+        
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        
+        sql = """
+            INSERT INTO partidas (torneo_id, equipo_local_id, equipo_visitante_id, fecha_partida, 
+                                  ronda, resultado_local, resultado_visitante, duracion_minutos, ganador_id, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(sql, (id_torneo, id_local, id_visitante, fecha, ronda, resultado_local, resultado_visitante, duracion, ganador_id, "system"))
+        conexion.commit()
+        print("\nPartida agregada correctamente.")
+        
+        cursor.close()
+        conexion.close()
+    
+    @staticmethod
+    def actualizar_resultado():
+        Torneo.listar_partidas()
+        id_partida = input("\nID de la partida: ")
+        
+        nuevo_local = input("Nuevo resultado local: ")
+        nuevo_visitante = input("Nuevo resultado visitante: ")
+        ganador_id = input("ID del ganador: ")
+        
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        
+        sql = "UPDATE partidas SET resultado_local = %s, resultado_visitante = %s, ganador_id = %s WHERE id_partida = %s"
+        cursor.execute(sql, (nuevo_local, nuevo_visitante, ganador_id, id_partida))
+        conexion.commit()
+        print("\nResultado actualizado correctamente.")
+        
+        cursor.close()
+        conexion.close()
+    
+    @staticmethod
+    def eliminar_partida():
+        Torneo.listar_partidas()
+        id_partida = input("\nID de la partida: ")
+        
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        
+        sql = "UPDATE partidas SET deleted = 1 WHERE id_partida = %s"
+        cursor.execute(sql, (id_partida,))
+        conexion.commit()
+        print("\nPartida eliminada correctamente.")
+        
+        cursor.close()
+        conexion.close()
+    
+    @staticmethod
+    def listar_sanciones():
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        
+        sql = """
+            SELECT s.id_sancion, u.nombre_completo, t.nombre_torneo, s.motivo, s.fecha_sancion, s.dias_suspension
+            FROM sanciones s
+            JOIN usuarios u ON s.usuario_id = u.id_usuario
+            JOIN torneos t ON s.torneo_id = t.id_torneo
+            WHERE s.deleted = 0
+        """
+        cursor.execute(sql)
+        sanciones = cursor.fetchall()
+        
+        print("\n===== SANCIONES =====")
+        for s in sanciones:
+            print(f"ID: {s[0]} | Usuario: {s[1]} | Torneo: {s[2]} | Motivo: {s[3]} | Fecha: {s[4]} | Dias: {s[5]}")
+        
+        cursor.close()
+        conexion.close()
+    
+    # torneo.py - metodo agregar_sancion sin fecha
+    @staticmethod
+    def agregar_sancion():
+        Usuario.listar_simple()
+        id_usuario = input("\nID del usuario: ")
+        
+        Torneo.listar()
+        id_torneo = input("ID del torneo: ")
+        
+        Torneo.listar_partidas()
+        id_partida = input("ID de la partida (0 si no aplica): ")
+        if id_partida == "0":
+            id_partida = None
+        
+        motivo = input("Motivo de la sancion: ")
+        dias = input("Dias de suspension: ")
+        
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        
+        sql = """
+            INSERT INTO sanciones (usuario_id, torneo_id, partida_id, motivo, fecha_sancion, dias_suspension, created_by)
+            VALUES (%s, %s, %s, %s, CURDATE(), %s, %s)
+        """
+        cursor.execute(sql, (id_usuario, id_torneo, id_partida, motivo, dias, "system"))
+        conexion.commit()
+        print("\nSancion agregada correctamente.")
+        
+        cursor.close()
+        conexion.close()
+    
+    @staticmethod
+    def eliminar_sancion():
+        Torneo.listar_sanciones()
+        id_sancion = input("\nID de la sancion: ")
+        
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        
+        sql = "UPDATE sanciones SET deleted = 1 WHERE id_sancion = %s"
+        cursor.execute(sql, (id_sancion,))
+        conexion.commit()
+        print("\nSancion eliminada correctamente.")
         
         cursor.close()
         conexion.close()

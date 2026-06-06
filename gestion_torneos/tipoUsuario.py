@@ -1,27 +1,26 @@
+# tipoUsuario.py
 from conexion import Conexion
 
-class tipoUsuario:
-    # Define los roles que pueden tener los usuarios en el sistema
-    tipos_disponibles = []  # Atributo de clase
+class TipoUsuario:
+    tipos_disponibles = []
     
     def __init__(self, nombre_tipo, descripcion_tipo):
         self.nombre_tipo = nombre_tipo
         self.descripcion_tipo = descripcion_tipo
-        tipoUsuario.tipos_disponibles.append(self)
+        TipoUsuario.tipos_disponibles.append(self)
     
-    def mostrar_info(self):  # Método de instancia
-        return f"Rol: {self.nombre_tipo}\nDescripción: {self.descripcion_tipo}"
+    def mostrar_info(self):
+        return f"Rol: {self.nombre_tipo}\nDescripcion: {self.descripcion_tipo}"
     
     def guardar(self):
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Verificar si ya existe
         cursor.execute("SELECT id_tipo_usuario FROM tipo_usuarios WHERE nombre_tipo = %s", (self.nombre_tipo,))
         existe = cursor.fetchone()
         
         if existe:
-            print(f"\nError: El tipo '{self.nombre_tipo}' ya existe.")
+            print(f"\nEl tipo '{self.nombre_tipo}' ya existe.")
             cursor.close()
             conexion.close()
             return
@@ -35,16 +34,14 @@ class tipoUsuario:
         conexion.close()
     
     @classmethod
-    def buscar_tipo_por_nombre(cls, nombre):  # Método de clase
-        # Busca un tipo de usuario por su nombre
+    def buscar_tipo_por_nombre(cls, nombre):
         for tipo in cls.tipos_disponibles:
             if tipo.nombre_tipo.lower() == nombre.lower():
                 return tipo
         return None
     
     @staticmethod
-    def validar_nombre_tipo(nombre):  # Método estático
-        # Valida si el nombre del tipo es correcto
+    def validar_nombre_tipo(nombre):
         nombres_validos = ["jugador", "admin", "jugador lider", "equipo tecnico", "comentarista"]
         return nombre.lower() in nombres_validos
     
@@ -59,7 +56,7 @@ class tipoUsuario:
         
         print("\n===== TIPOS DE USUARIO =====")
         for tipo in tipos:
-            print(f"ID: {tipo[0]} | Tipo: {tipo[1]} | Descripción: {tipo[2]}")
+            print(f"ID: {tipo[0]} | Tipo: {tipo[1]} | Descripcion: {tipo[2]}")
         
         cursor.close()
         conexion.close()
@@ -68,8 +65,8 @@ class tipoUsuario:
     def agregar():
         print("\n===== NUEVO TIPO DE USUARIO =====")
         nombre = input("Nombre del tipo: ")
-        desc = input("Descripción: ")
-        tipo = tipoUsuario(nombre, desc)
+        desc = input("Descripcion: ")
+        tipo = TipoUsuario(nombre, desc)
         tipo.guardar()
     
     @staticmethod
@@ -92,7 +89,7 @@ class tipoUsuario:
     
     @staticmethod
     def eliminar():
-        tipoUsuario.listar()
+        TipoUsuario.listar()
         id_tipo = input("\nIngrese ID del tipo: ")
         
         conexion = Conexion.conectar()

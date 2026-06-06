@@ -1,5 +1,6 @@
+# equipos.py
 from conexion import Conexion
-from usuarios import usuario
+from usuarios import Usuario
 
 class Equipo:
     equipos_registrados = []
@@ -8,14 +9,14 @@ class Equipo:
         self.nombre_equipo = nombre_equipo
         self.fecha_creacion = fecha_creacion
         self.capitan_id = capitan_id
-        self.miembros = [capitan_id]  # <-- lo establece como 1ER elemento
-        Equipo.equipos_registrados.append(self)  # <-- todos los equipos registrados
+        self.miembros = [capitan_id]
+        self.id_equipo = None
+        Equipo.equipos_registrados.append(self)
     
     def guardar(self):
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Validar que el capitán sea "Jugador Lider"
         cursor.execute("""
             SELECT u.id_usuario, t.nombre_tipo
             FROM usuarios u
@@ -26,22 +27,21 @@ class Equipo:
         capitan = cursor.fetchone()
         
         if not capitan:
-            print("\nError: El capitán no existe.")
+            print("\nEl capitan no existe.")
             cursor.close()
             conexion.close()
             return
         
         if capitan[1].lower() != "jugador lider":
-            print(f"\nError: El usuario es '{capitan[1]}', no es 'Jugador Lider'.")
+            print(f"\nEl usuario es '{capitan[1]}', no es 'Jugador Lider'.")
             print("Solo los usuarios con tipo 'Jugador Lider' pueden ser capitanes.")
             cursor.close()
             conexion.close()
             return
         
-        # Validar nombre de equipo único
         cursor.execute("SELECT id_equipo FROM equipos WHERE nombre_equipo = %s AND deleted = 0", (self.nombre_equipo,))
         if cursor.fetchone():
-            print(f"\nError: Ya existe un equipo con el nombre '{self.nombre_equipo}'.")
+            print(f"\nYa existe un equipo con el nombre '{self.nombre_equipo}'.")
             cursor.close()
             conexion.close()
             return
@@ -50,11 +50,10 @@ class Equipo:
         cursor.execute(sql, (self.nombre_equipo, self.fecha_creacion, self.capitan_id, "system"))
         conexion.commit()
         
-        equipo_id = cursor.lastrowid
+        self.id_equipo = cursor.lastrowid
         
-        # Insertar al capitán en equipo_usuarios
         sql_miembro = "INSERT INTO equipo_usuarios (equipo_id, usuario_id, fecha_ingreso, created_by) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql_miembro, (equipo_id, self.capitan_id, self.fecha_creacion, "system"))
+        cursor.execute(sql_miembro, (self.id_equipo, self.capitan_id, self.fecha_creacion, "system"))
         conexion.commit()
         
         print(f"\nEquipo '{self.nombre_equipo}' agregado correctamente.")
@@ -66,11 +65,10 @@ class Equipo:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Verificar que el usuario no esté ya en el equipo
         cursor.execute("SELECT id_equipo_usuario FROM equipo_usuarios WHERE equipo_id = %s AND usuario_id = %s AND deleted = 0", 
                     (self.id_equipo, usuario_id))
         if cursor.fetchone():
-            print("\nError: El usuario ya es miembro de este equipo.")
+            print("\nEl usuario ya es miembro de este equipo.")
             cursor.close()
             conexion.close()
             return
@@ -88,14 +86,14 @@ class Equipo:
         conexion.close()
     
     @classmethod
-    def buscar_equipo_por_nombre(cls, nombre):  # Método de clase
+    def buscar_equipo_por_nombre(cls, nombre):
         for equipo in cls.equipos_registrados:
             if equipo.nombre_equipo.lower() == nombre.lower():
                 return equipo
         return None
     
     @staticmethod
-    def validar_nombre_equipo(nombre):  # Método estático
+    def validar_nombre_equipo(nombre):
         return len(nombre) >= 3 and len(nombre) <= 50
     
     @staticmethod
@@ -114,7 +112,7 @@ class Equipo:
         
         print("\n===== EQUIPOS =====")
         for e in equipos:
-            print(f"ID: {e[0]} | Equipo: {e[1]} | Capitán: {e[3]}")
+            print(f"ID: {e[0]} | Equipo: {e[1]} | Capitan: {e[3]}")
         
         cursor.close()
         conexion.close()
@@ -124,12 +122,12 @@ class Equipo:
         print("\n===== NUEVO EQUIPO =====")
         
         print("\nUSUARIOS DISPONIBLES")
-        usuario.listar_simple()
+        Usuario.listar_simple()
         
-        print("\nNOTA: El capitán debe ser tipo 'Jugador Lider'")
-        capitan_id = input("\nID del capitán: ")
+        print("\nNOTA: El capitan debe ser tipo 'Jugador Lider'")
+        capitan_id = input("\nID del capitan: ")
         nombre = input("Nombre del equipo: ")
-        fecha = input("Fecha creación (AAAA-MM-DD): ")
+        fecha = input("Fecha creacion (AAAA-MM-DD): ")
         
         if not Equipo.validar_nombre_equipo(nombre):
             print("\nEl nombre debe tener entre 3 y 50 caracteres.")
@@ -173,19 +171,19 @@ class Equipo:
         id_equipo = input("\nID del equipo: ")
         
         print("\nUSUARIOS DISPONIBLES")
-        usuario.listar_simple()
+        Usuario.listar_simple()
         usuario_id = input("ID del usuario a agregar: ")
         fecha_ingreso = input("Fecha de ingreso (AAAA-MM-DD): ")
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
-        cursor.execute("SELECT nombre_equipo FROM equipos WHERE id_equipo = %s AND deleted = 0", (id_equipo,))
-        equipo_nombre = cursor.fetchone()
+        cursor.execute("SELECT id_equipo, nombre_equipo FROM equipos WHERE id_equipo = %s AND deleted = 0", (id_equipo,))
+        equipo_data = cursor.fetchone()
         cursor.close()
         conexion.close()
         
-        if equipo_nombre:
-            equipo = Equipo(equipo_nombre[0], None, None)
+        if equipo_data:
+            equipo = Equipo(equipo_data[1], None, None)
             equipo.id_equipo = int(id_equipo)
             equipo.agregar_miembro(usuario_id, fecha_ingreso)
         else:

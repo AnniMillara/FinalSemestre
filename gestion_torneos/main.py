@@ -1,7 +1,8 @@
+# main.py
 import os
 from ciudad import Ciudad
-from tipoUsuario import tipoUsuario
-from usuarios import usuario
+from tipoUsuario import TipoUsuario
+from usuarios import Usuario
 from equipos import Equipo
 from torneo import Torneo
 from pais import Pais
@@ -9,15 +10,14 @@ from pais import Pais
 def limpiar_consola():
     os.system('cls')
 
-# BUCLE WHILE
 go = True
 while go:
     print("\n\nSISTEMA DE GESTION DE TORNEOS\n")
     
-    print("\n   --- PAÍSES ---")
-    print("   1. Listar países")
-    print("   2. Agregar país")
-    print("   3. Eliminar país")
+    print("\n   --- PAISES ---")
+    print("   1. Listar paises")
+    print("   2. Agregar pais")
+    print("   3. Eliminar pais")
     
     print("\n   --- CIUDADES ---")
     print("   4. Listar ciudades")
@@ -62,18 +62,13 @@ while go:
     
     print("\n   --- SANCIONES ---")
     print("   33. Listar sanciones")
-    print("   34. Agregar sanción")
-    print("   35. Eliminar sanción")
+    print("   34. Agregar sancion")
+    print("   35. Eliminar sancion")
     
     print("\n  0. Salir\n")
     
-    try:
-        elect = int(input("\nSeleccione una opción: "))
-    except ValueError:
-        print("\nPor favor ingresar un número válido...")
-        continue
+    elect = int(input("\nSeleccione una opcion: "))
     
-    # ========== PAÍSES ==========
     if elect == 1:
         limpiar_consola()
         Pais.listar()
@@ -86,7 +81,6 @@ while go:
         limpiar_consola()
         Pais.eliminar()
     
-    # ========== CIUDADES ==========
     elif elect == 4:
         limpiar_consola()
         Ciudad.listar()
@@ -99,57 +93,54 @@ while go:
         limpiar_consola()
         Ciudad.eliminar()
     
-    # ========== TIPOS DE USUARIO ==========
     elif elect == 7:
         limpiar_consola()
-        tipoUsuario.listar()
+        TipoUsuario.listar()
     
     elif elect == 8:
         limpiar_consola()
-        tipoUsuario.agregar()
+        TipoUsuario.agregar()
     
     elif elect == 9:
         limpiar_consola()
-        tipoUsuario.validar()
+        TipoUsuario.validar()
     
     elif elect == 10:
         limpiar_consola()
-        tipoUsuario.eliminar()
+        TipoUsuario.eliminar()
     
-    # ========== USUARIOS ==========
     elif elect == 11:
         limpiar_consola()
-        usuario.listar()
+        Usuario.listar()
     
     elif elect == 12:
         limpiar_consola()
-        usuario.listar_simple()
+        Usuario.listar_simple()
     
     elif elect == 13:
         limpiar_consola()
-        usuario.agregar()
+        Usuario.agregar()
     
     elif elect == 14:
         limpiar_consola()
-        usuario.actualizar()
+        Usuario.actualizar()
     
     elif elect == 15:
         limpiar_consola()
-        usuario.cambiar_ciudad()
+        Usuario.cambiar_ciudad()
     
     elif elect == 16:
         limpiar_consola()
-        usuario.cambiar_tipo()
+        Usuario.cambiar_tipo()
     
     elif elect == 17:
         limpiar_consola()
-        usuario.validar_edad()
+        Usuario.validar_edad()
     
     elif elect == 18:
         limpiar_consola()
-        usuario.eliminar()
+        Usuario.eliminar()
     
-    # ========== EQUIPOS ==========
     elif elect == 19:
         limpiar_consola()
         Equipo.listar()
@@ -170,7 +161,6 @@ while go:
         limpiar_consola()
         Equipo.eliminar()
     
-    # ========== TORNEOS ==========
     elif elect == 24:
         limpiar_consola()
         Torneo.listar()
@@ -191,7 +181,6 @@ while go:
         limpiar_consola()
         Torneo.eliminar()
     
-    # ========== PARTIDAS ==========
     elif elect == 29:
         limpiar_consola()
         Torneo.listar_partidas()
@@ -208,7 +197,6 @@ while go:
         limpiar_consola()
         Torneo.eliminar_partida()
     
-    # ========== SANCIONES ==========
     elif elect == 33:
         limpiar_consola()
         Torneo.listar_sanciones()
@@ -226,4 +214,4 @@ while go:
         print("\nok bye...")
         go = False
     else:
-        print("\nPor favor seleccionar elemento válido...")
+        print("\nPor favor seleccionar elemento valido...")
