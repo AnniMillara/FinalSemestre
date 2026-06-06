@@ -1,9 +1,10 @@
 import os
-from ciudad import ciudad
+from ciudad import Ciudad
 from tipoUsuario import tipoUsuario
 from usuarios import usuario
 from equipos import Equipo
 from torneo import Torneo
+from pais import Pais
 
 def limpiar_consola():
     os.system('cls')
@@ -13,149 +14,212 @@ go = True
 while go:
     print("\n\nSISTEMA DE GESTION DE TORNEOS\n")
     
+    print("\n   --- PAÍSES ---")
+    print("   1. Listar países")
+    print("   2. Agregar país")
+    print("   3. Eliminar país")
+    
     print("\n   --- CIUDADES ---")
-    print("   1. Listar ciudades")
-    print("   2. Agregar ciudad")
-    print("   3. Eliminar ciudad")
+    print("   4. Listar ciudades")
+    print("   5. Agregar ciudad")
+    print("   6. Eliminar ciudad")
     
     print("\n   --- TIPOS DE USUARIO ---")
-    print("   4. Listar tipos de usuario")
-    print("   5. Agregar tipo de usuario")
-    print("   6. Validar tipo de usuario")
-    print("   7. Eliminar tipo de usuario")
+    print("   7. Listar tipos de usuario")
+    print("   8. Agregar tipo de usuario")
+    print("   9. Validar tipo de usuario")
+    print("   10. Eliminar tipo de usuario")
     
     print("\n   --- USUARIOS ---")
-    print("   8. Listar usuarios")
-    print("   9. Listar usuarios (vista simple)")
-    print("   10. Agregar usuario")
-    print("   11. Actualizar email de usuario")
-    print("   12. Cambiar ciudad de usuario")
-    print("   13. Cambiar tipo de usuario")
-    print("   14. Validar edad de usuario")
-    print("   15. Eliminar usuario")
+    print("   11. Listar usuarios")
+    print("   12. Listar usuarios (vista simple)")
+    print("   13. Agregar usuario")
+    print("   14. Actualizar email de usuario")
+    print("   15. Cambiar ciudad de usuario")
+    print("   16. Cambiar tipo de usuario")
+    print("   17. Validar edad de usuario")
+    print("   18. Eliminar usuario")
     
     print("\n   --- EQUIPOS ---")
-    print("   16. Listar equipos")
-    print("   17. Agregar equipo")
-    print("   18. Ver miembros de un equipo")
-    print("   19. Agregar miembro a equipo")
-    print("   20. Eliminar equipo")
+    print("   19. Listar equipos")
+    print("   20. Agregar equipo")
+    print("   21. Ver miembros de un equipo")
+    print("   22. Agregar miembro a equipo")
+    print("   23. Eliminar equipo")
     
     print("\n   --- TORNEOS ---")
-    print("   21. Listar torneos")
-    print("   22. Agregar torneo")
-    print("   23. Buscar torneo por juego")
-    print("   24. Inscribir equipo en torneo")
-    print("   25. Eliminar torneo")
+    print("   24. Listar torneos")
+    print("   25. Agregar torneo")
+    print("   26. Buscar torneo por juego")
+    print("   27. Inscribir equipo en torneo")
+    print("   28. Eliminar torneo")
+    
+    print("\n   --- PARTIDAS ---")
+    print("   29. Listar partidas")
+    print("   30. Agregar partida")
+    print("   31. Actualizar resultado de partida")
+    print("   32. Eliminar partida")
+    
+    print("\n   --- SANCIONES ---")
+    print("   33. Listar sanciones")
+    print("   34. Agregar sanción")
+    print("   35. Eliminar sanción")
     
     print("\n  0. Salir\n")
     
-    elect = int(input("\nSeleccione una opción: "))
+    try:
+        elect = int(input("\nSeleccione una opción: "))
+    except ValueError:
+        print("\nPor favor ingresar un número válido...")
+        continue
     
-    # ========== CIUDADES ==========
+    # ========== PAÍSES ==========
     if elect == 1:
         limpiar_consola()
-        ciudad.listar()
+        Pais.listar()
     
     elif elect == 2:
         limpiar_consola()
-        ciudad.agregar()
+        Pais.agregar()
     
     elif elect == 3:
         limpiar_consola()
-        ciudad.eliminar()
+        Pais.eliminar()
     
-    # ========== TIPOS DE USUARIO ==========
+    # ========== CIUDADES ==========
     elif elect == 4:
         limpiar_consola()
-        tipoUsuario.listar()
+        Ciudad.listar()
     
     elif elect == 5:
         limpiar_consola()
-        tipoUsuario.agregar()
+        Ciudad.agregar()
     
     elif elect == 6:
         limpiar_consola()
+        Ciudad.eliminar()
+    
+    # ========== TIPOS DE USUARIO ==========
+    elif elect == 7:
+        limpiar_consola()
+        tipoUsuario.listar()
+    
+    elif elect == 8:
+        limpiar_consola()
+        tipoUsuario.agregar()
+    
+    elif elect == 9:
+        limpiar_consola()
         tipoUsuario.validar()
     
-    elif elect == 7:
+    elif elect == 10:
         limpiar_consola()
         tipoUsuario.eliminar()
     
     # ========== USUARIOS ==========
-    elif elect == 8:
+    elif elect == 11:
         limpiar_consola()
         usuario.listar()
     
-    elif elect == 9:
+    elif elect == 12:
         limpiar_consola()
         usuario.listar_simple()
     
-    elif elect == 10:
+    elif elect == 13:
         limpiar_consola()
         usuario.agregar()
     
-    elif elect == 11:
+    elif elect == 14:
         limpiar_consola()
         usuario.actualizar()
     
-    elif elect == 12:
+    elif elect == 15:
         limpiar_consola()
         usuario.cambiar_ciudad()
     
-    elif elect == 13:
+    elif elect == 16:
         limpiar_consola()
         usuario.cambiar_tipo()
     
-    elif elect == 14:
+    elif elect == 17:
         limpiar_consola()
         usuario.validar_edad()
     
-    elif elect == 15:
+    elif elect == 18:
         limpiar_consola()
         usuario.eliminar()
     
     # ========== EQUIPOS ==========
-    elif elect == 16:
+    elif elect == 19:
         limpiar_consola()
         Equipo.listar()
     
-    elif elect == 17:
+    elif elect == 20:
         limpiar_consola()
         Equipo.agregar()
     
-    elif elect == 18:
+    elif elect == 21:
         limpiar_consola()
         Equipo.ver_miembros()
     
-    elif elect == 19:
+    elif elect == 22:
         limpiar_consola()
         Equipo.agregar_miembro()
     
-    elif elect == 20:
+    elif elect == 23:
         limpiar_consola()
         Equipo.eliminar()
     
     # ========== TORNEOS ==========
-    elif elect == 21:
+    elif elect == 24:
         limpiar_consola()
         Torneo.listar()
     
-    elif elect == 22:
+    elif elect == 25:
         limpiar_consola()
         Torneo.agregar()
     
-    elif elect == 23:
+    elif elect == 26:
         limpiar_consola()
         Torneo.buscar_por_juego()
     
-    elif elect == 24:
+    elif elect == 27:
         limpiar_consola()
         Torneo.inscribir_equipo()
     
-    elif elect == 25:
+    elif elect == 28:
         limpiar_consola()
         Torneo.eliminar()
+    
+    # ========== PARTIDAS ==========
+    elif elect == 29:
+        limpiar_consola()
+        Torneo.listar_partidas()
+    
+    elif elect == 30:
+        limpiar_consola()
+        Torneo.agregar_partida()
+    
+    elif elect == 31:
+        limpiar_consola()
+        Torneo.actualizar_resultado()
+    
+    elif elect == 32:
+        limpiar_consola()
+        Torneo.eliminar_partida()
+    
+    # ========== SANCIONES ==========
+    elif elect == 33:
+        limpiar_consola()
+        Torneo.listar_sanciones()
+    
+    elif elect == 34:
+        limpiar_consola()
+        Torneo.agregar_sancion()
+    
+    elif elect == 35:
+        limpiar_consola()
+        Torneo.eliminar_sancion()
     
     elif elect == 0:
         limpiar_consola()
