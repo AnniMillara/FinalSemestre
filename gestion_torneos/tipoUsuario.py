@@ -2,20 +2,20 @@
 from conexion import Conexion
 
 class TipoUsuario:
-    tipos_disponibles = []
-    
     def __init__(self, nombre_tipo, descripcion_tipo):
         self.nombre_tipo = nombre_tipo
         self.descripcion_tipo = descripcion_tipo
-        TipoUsuario.tipos_disponibles.append(self)
     
     def mostrar_info(self):
+        # Retorna informacion del tipo de usuario
         return f"Rol: {self.nombre_tipo}\nDescripcion: {self.descripcion_tipo}"
     
     def guardar(self):
+        # Guarda un nuevo tipo de usuario en la base de datos
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Verificar si ya existe
         cursor.execute("SELECT id_tipo_usuario FROM tipo_usuarios WHERE nombre_tipo = %s", (self.nombre_tipo,))
         existe = cursor.fetchone()
         
@@ -25,6 +25,7 @@ class TipoUsuario:
             conexion.close()
             return
         
+        # Insertar nuevo tipo
         sql = "INSERT INTO tipo_usuarios (nombre_tipo, descripcion_tipo, created_by) VALUES (%s, %s, %s)"
         cursor.execute(sql, (self.nombre_tipo, self.descripcion_tipo, "system"))
         conexion.commit()
@@ -33,20 +34,9 @@ class TipoUsuario:
         cursor.close()
         conexion.close()
     
-    @classmethod
-    def buscar_tipo_por_nombre(cls, nombre):
-        for tipo in cls.tipos_disponibles:
-            if tipo.nombre_tipo.lower() == nombre.lower():
-                return tipo
-        return None
-    
-    @staticmethod
-    def validar_nombre_tipo(nombre):
-        nombres_validos = ["jugador", "admin", "jugador lider", "equipo tecnico", "comentarista"]
-        return nombre.lower() in nombres_validos
-    
     @staticmethod
     def listar():
+        # Lista todos los tipos de usuario activos
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -63,6 +53,7 @@ class TipoUsuario:
     
     @staticmethod
     def agregar():
+        # Interfaz para agregar un nuevo tipo de usuario
         print("\n===== NUEVO TIPO DE USUARIO =====")
         nombre = input("Nombre del tipo: ")
         desc = input("Descripcion: ")
@@ -71,6 +62,7 @@ class TipoUsuario:
     
     @staticmethod
     def validar():
+        # Verifica si un tipo de usuario existe en la base de datos
         nombre = input("Ingrese tipo a validar: ")
         
         conexion = Conexion.conectar()
@@ -89,6 +81,7 @@ class TipoUsuario:
     
     @staticmethod
     def eliminar():
+        # Elimina logicamente un tipo de usuario
         TipoUsuario.listar()
         id_tipo = input("\nIngrese ID del tipo: ")
         

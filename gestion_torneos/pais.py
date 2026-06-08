@@ -6,9 +6,11 @@ class Pais:
         self.nombre_pais = nombre_pais
     
     def guardar(self):
+        # Guarda un nuevo pais en la base de datos
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Verificar si el pais ya existe
         cursor.execute("SELECT id_pais FROM paises WHERE nombre_pais = %s", (self.nombre_pais,))
         existe = cursor.fetchone()
         
@@ -18,6 +20,7 @@ class Pais:
             conexion.close()
             return
         
+        # Insertar nuevo pais
         sql = "INSERT INTO paises (nombre_pais, created_by) VALUES (%s, %s)"
         cursor.execute(sql, (self.nombre_pais, "system"))
         conexion.commit()
@@ -28,6 +31,7 @@ class Pais:
     
     @staticmethod
     def listar():
+        # Lista todos los paises activos
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -44,6 +48,7 @@ class Pais:
     
     @staticmethod
     def listar_simple():
+        # Lista paises en formato simple (para selects)
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -60,6 +65,7 @@ class Pais:
     
     @staticmethod
     def existe(pais_id):
+        # Verifica si un pais existe por su ID
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -73,6 +79,7 @@ class Pais:
     
     @staticmethod
     def agregar():
+        # Interfaz para agregar un nuevo pais
         print("\n===== NUEVO PAIS =====")
         nombre = input("Nombre del pais: ")
         nuevo_pais = Pais(nombre)
@@ -80,6 +87,7 @@ class Pais:
     
     @staticmethod
     def eliminar():
+        # Elimina logicamente un pais (verifica que no tenga ciudades asociadas)
         Pais.listar()
         
         id_pais = int(input("\nIngrese ID del pais: "))
@@ -87,6 +95,7 @@ class Pais:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Verificar si el pais tiene ciudades asociadas
         cursor.execute("SELECT COUNT(*) FROM ciudades WHERE pais_id = %s AND deleted = 0", (id_pais,))
         total_ciudades = cursor.fetchone()[0]
         
@@ -97,6 +106,7 @@ class Pais:
             conexion.close()
             return
         
+        # Eliminacion logica
         sql = "UPDATE paises SET deleted = 1 WHERE id_pais = %s"
         cursor.execute(sql, (id_pais,))
         conexion.commit()

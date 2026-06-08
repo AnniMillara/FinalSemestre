@@ -1,12 +1,10 @@
-# torneo.py - corregido
+# torneo.py
 from conexion import Conexion
 from ciudad import Ciudad
 from usuarios import Usuario
 from equipos import Equipo
 
 class Torneo:
-    torneos_disponibles = []
-    
     def __init__(self, nombre_torneo=None, juego=None, premio=None, fecha_inicio=None, fecha_fin=None, organizador_id=None, ciudad_id=None):
         self.nombre_torneo = nombre_torneo
         self.juego = juego
@@ -15,19 +13,13 @@ class Torneo:
         self.fecha_fin = fecha_fin
         self.organizador_id = organizador_id
         self.ciudad_id = ciudad_id
-        self.equipos_inscritos = []
-        Torneo.torneos_disponibles.append(self)
-    
-    def inscribir_equipo(self, equipo):
-        if equipo not in self.equipos_inscritos:
-            self.equipos_inscritos.append(equipo)
-            return f"Equipo {equipo.nombre_equipo} inscrito en {self.nombre_torneo}"
-        return "Equipo ya inscrito"
     
     def guardar(self):
+        # Guarda un nuevo torneo en la base de datos
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Validar que el organizador existe y es tipo "Admin"
         cursor.execute("""
             SELECT u.id_usuario, t.nombre_tipo
             FROM usuarios u
@@ -50,6 +42,7 @@ class Torneo:
             conexion.close()
             return
         
+        # Validar que la ciudad existe
         cursor.execute("SELECT id_ciudad FROM ciudades WHERE id_ciudad = %s AND deleted = 0", (self.ciudad_id,))
         if not cursor.fetchone():
             print("\nLa ciudad no existe. Primero debes crear la ciudad.")
@@ -57,11 +50,11 @@ class Torneo:
             conexion.close()
             return
         
+        # Insertar torneo
         sql = """
             INSERT INTO torneos (nombre_torneo, juego, premio, fecha_inicio, fecha_fin, organizador_id, ciudad_id, created_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
-        
         cursor.execute(sql, (self.nombre_torneo, self.juego, self.premio, self.fecha_inicio, self.fecha_fin, self.organizador_id, self.ciudad_id, "system"))
         conexion.commit()
         print("\nTorneo agregado correctamente.")
@@ -71,6 +64,7 @@ class Torneo:
     
     @staticmethod
     def listar():
+        # Lista todos los torneos activos
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -93,6 +87,7 @@ class Torneo:
     
     @staticmethod
     def agregar():
+        # Interfaz para agregar un nuevo torneo
         print("\n===== NUEVO TORNEO =====")
         
         print("\nCIUDADES DISPONIBLES")
@@ -114,6 +109,7 @@ class Torneo:
     
     @staticmethod
     def buscar_por_juego():
+        # Busca torneos por nombre del juego
         juego_buscar = input("\nIngrese el nombre del juego a buscar: ")
         
         conexion = Conexion.conectar()
@@ -141,6 +137,7 @@ class Torneo:
     
     @staticmethod
     def inscribir_equipo():
+        # Inscribe un equipo en un torneo
         Torneo.listar()
         id_torneo = input("\nIngrese ID del torneo: ")
         
@@ -151,6 +148,7 @@ class Torneo:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Verificar si el equipo ya esta inscrito
         cursor.execute("SELECT id_torneo_equipo FROM torneo_equipos WHERE torneo_id = %s AND equipo_id = %s AND deleted = 0", 
                     (id_torneo, id_equipo))
         
@@ -160,6 +158,7 @@ class Torneo:
             conexion.close()
             return
         
+        # Insertar inscripcion
         sql = """
             INSERT INTO torneo_equipos (torneo_id, equipo_id, fecha_inscripcion, created_by)
             VALUES (%s, %s, %s, %s)
@@ -174,6 +173,7 @@ class Torneo:
     
     @staticmethod
     def eliminar():
+        # Elimina logicamente un torneo
         Torneo.listar()
         id_torneo = input("\nIngrese ID del torneo: ")
         
@@ -190,6 +190,7 @@ class Torneo:
     
     @staticmethod
     def listar_partidas():
+        # Lista todas las partidas
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -214,6 +215,7 @@ class Torneo:
     
     @staticmethod
     def agregar_partida():
+        # Agrega una nueva partida
         Torneo.listar()
         id_torneo = input("\nID del torneo: ")
         
@@ -248,6 +250,7 @@ class Torneo:
     
     @staticmethod
     def actualizar_resultado():
+        # Actualiza el resultado de una partida
         Torneo.listar_partidas()
         id_partida = input("\nID de la partida: ")
         
@@ -268,6 +271,7 @@ class Torneo:
     
     @staticmethod
     def eliminar_partida():
+        # Elimina logicamente una partida
         Torneo.listar_partidas()
         id_partida = input("\nID de la partida: ")
         
@@ -284,6 +288,7 @@ class Torneo:
     
     @staticmethod
     def listar_sanciones():
+        # Lista todas las sanciones
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -304,9 +309,9 @@ class Torneo:
         cursor.close()
         conexion.close()
     
-    # torneo.py - metodo agregar_sancion sin fecha
     @staticmethod
     def agregar_sancion():
+        # Agrega una nueva sancion
         Usuario.listar_simple()
         id_usuario = input("\nID del usuario: ")
         
@@ -337,6 +342,7 @@ class Torneo:
     
     @staticmethod
     def eliminar_sancion():
+        # Elimina logicamente una sancion
         Torneo.listar_sanciones()
         id_sancion = input("\nID de la sancion: ")
         

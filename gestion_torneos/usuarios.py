@@ -4,7 +4,7 @@ from tipoUsuario import TipoUsuario
 from ciudad import Ciudad
 
 class Usuario:
-    def __init__(self, nombre_completo = None, email = None, username = None, edad = None, ciudad_id = None, tipo_usuario_id = None):
+    def __init__(self, nombre_completo=None, email=None, username=None, edad=None, ciudad_id=None, tipo_usuario_id=None):
         self.nombre_completo = nombre_completo
         self.email = email
         self.username = username
@@ -13,9 +13,11 @@ class Usuario:
         self.tipo_usuario_id = tipo_usuario_id
     
     def guardar(self):
+        # Guarda un nuevo usuario en la base de datos
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Validar que la ciudad existe
         cursor.execute("SELECT id_ciudad FROM ciudades WHERE id_ciudad = %s AND deleted = 0", (self.ciudad_id,))
         if not cursor.fetchone():
             print("\nLa ciudad no existe. Primero debes crear la ciudad.")
@@ -23,6 +25,7 @@ class Usuario:
             conexion.close()
             return
         
+        # Validar que el tipo de usuario existe
         cursor.execute("SELECT id_tipo_usuario FROM tipo_usuarios WHERE id_tipo_usuario = %s AND deleted = 0", (self.tipo_usuario_id,))
         if not cursor.fetchone():
             print("\nEl tipo de usuario no existe. Primero debes crear el tipo.")
@@ -30,6 +33,7 @@ class Usuario:
             conexion.close()
             return
         
+        # Validar email unico
         cursor.execute("SELECT id_usuario FROM usuarios WHERE email = %s AND deleted = 0", (self.email,))
         if cursor.fetchone():
             print("\nEl email ya esta registrado.")
@@ -37,6 +41,7 @@ class Usuario:
             conexion.close()
             return
         
+        # Validar username unico
         cursor.execute("SELECT id_usuario FROM usuarios WHERE username = %s AND deleted = 0", (self.username,))
         if cursor.fetchone():
             print("\nEl username ya existe. Elige otro.")
@@ -44,12 +49,14 @@ class Usuario:
             conexion.close()
             return
         
+        # Validar edad minima
         if self.edad < 16:
             print("\nLa edad debe ser mayor o igual a 16 años.")
             cursor.close()
             conexion.close()
             return
         
+        # Insertar usuario
         sql = """
             INSERT INTO usuarios (nombre_completo, email, username, ciudad_id, edad, tipo_usuario_id, created_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -62,29 +69,8 @@ class Usuario:
         conexion.close()
     
     @staticmethod
-    def mostrar_datos():
-        conexion = Conexion.conectar()
-        cursor = conexion.cursor()
-        
-        sql = """
-            SELECT nombre_completo, username
-            FROM usuarios
-            WHERE deleted = 0
-            ORDER BY username ASC;
-        """
-        
-        cursor.execute(sql)
-        paraMostrar = cursor.fetchall()
-        
-        print('\n=== USUARIOS ===\n')
-        for mostrar in paraMostrar:
-            print(f'Nombre: {mostrar[0]} | Usuario: {mostrar[1]}')
-        
-        conexion.close()
-        cursor.close()
-    
-    @staticmethod
     def listar():
+        # Lista todos los usuarios con sus datos completos
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -107,6 +93,7 @@ class Usuario:
     
     @staticmethod
     def listar_simple():
+        # Lista usuarios en formato simple (para selects)
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -123,6 +110,7 @@ class Usuario:
     
     @staticmethod
     def agregar():
+        # Interfaz para agregar un nuevo usuario
         print("\n===== NUEVO USUARIO =====")
         
         print("\nCIUDADES DISPONIBLES")
@@ -136,7 +124,6 @@ class Usuario:
         nombre = input("Nombre completo: ")
         email = input("Email: ")
         username = input("Username: ")
-        
         edad = int(input("Edad: "))
         
         usuario_obj = Usuario(nombre, email, username, edad, ciudad_id, tipo_id)
@@ -144,6 +131,7 @@ class Usuario:
     
     @staticmethod
     def actualizar():
+        # Actualiza el email de un usuario
         Usuario.listar_simple()
         
         id_usuario = input("\nIngrese ID del usuario: ")
@@ -165,6 +153,7 @@ class Usuario:
     
     @staticmethod
     def cambiar_ciudad():
+        # Cambia la ciudad de un usuario
         Usuario.listar_simple()
         
         id_usuario = input("\nIngrese ID del usuario: ")
@@ -176,6 +165,7 @@ class Usuario:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Validar que la ciudad existe
         cursor.execute("SELECT id_ciudad FROM ciudades WHERE id_ciudad = %s AND deleted = 0", (nueva_ciudad_id,))
         if not cursor.fetchone():
             print("\nLa ciudad no existe.")
@@ -193,6 +183,7 @@ class Usuario:
     
     @staticmethod
     def cambiar_tipo():
+        # Cambia el tipo de usuario
         Usuario.listar_simple()
         
         id_usuario = input("\nIngrese ID del usuario: ")
@@ -204,6 +195,7 @@ class Usuario:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Validar que el tipo existe
         cursor.execute("SELECT id_tipo_usuario FROM tipo_usuarios WHERE id_tipo_usuario = %s AND deleted = 0", (nuevo_tipo_id,))
         if not cursor.fetchone():
             print("\nEl tipo de usuario no existe.")
@@ -221,6 +213,7 @@ class Usuario:
     
     @staticmethod
     def validar_edad():
+        # Valida si una edad cumple el requisito minimo
         edad = int(input("Ingrese edad: "))
         
         if edad >= 16:
@@ -230,6 +223,7 @@ class Usuario:
     
     @staticmethod
     def eliminar():
+        # Elimina logicamente un usuario
         Usuario.listar_simple()
         
         id_usuario = input("\nIngrese ID del usuario: ")

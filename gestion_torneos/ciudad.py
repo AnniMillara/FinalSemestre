@@ -8,9 +8,11 @@ class Ciudad:
         self.pais_id = pais_id
     
     def guardar(self):
+        # Guarda una nueva ciudad en la base de datos
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Verificar que el pais existe
         if not Pais.existe(self.pais_id):
             print(f"\nEl pais con ID {self.pais_id} no existe.")
             print("Primero debes crear el pais.")
@@ -18,6 +20,7 @@ class Ciudad:
             conexion.close()
             return
         
+        # Verificar que la ciudad no existe ya en ese pais
         cursor.execute("""
             SELECT id_ciudad FROM ciudades 
             WHERE nombre_ciudad = %s AND pais_id = %s AND deleted = 0
@@ -29,6 +32,7 @@ class Ciudad:
             conexion.close()
             return
         
+        # Insertar nueva ciudad
         sql = """
             INSERT INTO ciudades (nombre_ciudad, pais_id, created_by)
             VALUES (%s, %s, %s)
@@ -36,6 +40,7 @@ class Ciudad:
         cursor.execute(sql, (self.nombre_ciudad, self.pais_id, "system"))
         conexion.commit()
         
+        # Obtener nombre del pais para el mensaje
         cursor.execute("SELECT nombre_pais FROM paises WHERE id_pais = %s", (self.pais_id,))
         nombre_pais = cursor.fetchone()[0]
         
@@ -46,6 +51,7 @@ class Ciudad:
     
     @staticmethod
     def listar():
+        # Lista todas las ciudades agrupadas por pais
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -73,6 +79,7 @@ class Ciudad:
     
     @staticmethod
     def listar_por_pais(pais_id):
+        # Lista ciudades de un pais especifico
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -91,6 +98,7 @@ class Ciudad:
     
     @staticmethod
     def agregar():
+        # Interfaz para agregar una nueva ciudad
         print("\n===== NUEVA CIUDAD =====")
         
         Pais.listar_simple()
@@ -108,6 +116,7 @@ class Ciudad:
     
     @staticmethod
     def eliminar():
+        # Elimina logicamente una ciudad (verifica que no tenga usuarios asociados)
         Ciudad.listar()
         
         id_ciudad = int(input("\nIngrese ID de la ciudad a eliminar: "))
@@ -115,6 +124,7 @@ class Ciudad:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Verificar si la ciudad tiene usuarios asociados
         cursor.execute("SELECT COUNT(*) FROM usuarios WHERE ciudad_id = %s AND deleted = 0", (id_ciudad,))
         total_usuarios = cursor.fetchone()[0]
         
@@ -125,6 +135,7 @@ class Ciudad:
             conexion.close()
             return
         
+        # Eliminacion logica
         sql = "UPDATE ciudades SET deleted = 1 WHERE id_ciudad = %s"
         cursor.execute(sql, (id_ciudad,))
         conexion.commit()

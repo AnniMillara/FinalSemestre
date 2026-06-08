@@ -72,143 +72,108 @@ while go:
     if elect == 1:
         limpiar_consola()
         Pais.listar()
-    
     elif elect == 2:
         limpiar_consola()
         Pais.agregar()
-    
     elif elect == 3:
         limpiar_consola()
         Pais.eliminar()
-    
     elif elect == 4:
         limpiar_consola()
         Ciudad.listar()
-    
     elif elect == 5:
         limpiar_consola()
         Ciudad.agregar()
-    
     elif elect == 6:
         limpiar_consola()
         Ciudad.eliminar()
-    
     elif elect == 7:
         limpiar_consola()
         TipoUsuario.listar()
-    
     elif elect == 8:
         limpiar_consola()
         TipoUsuario.agregar()
-    
     elif elect == 9:
         limpiar_consola()
         TipoUsuario.validar()
-    
     elif elect == 10:
         limpiar_consola()
         TipoUsuario.eliminar()
-    
     elif elect == 11:
         limpiar_consola()
         Usuario.listar()
-    
     elif elect == 12:
         limpiar_consola()
         Usuario.listar_simple()
-    
     elif elect == 13:
         limpiar_consola()
         Usuario.agregar()
-    
     elif elect == 14:
         limpiar_consola()
         Usuario.actualizar()
-    
     elif elect == 15:
         limpiar_consola()
         Usuario.cambiar_ciudad()
-    
     elif elect == 16:
         limpiar_consola()
         Usuario.cambiar_tipo()
-    
     elif elect == 17:
         limpiar_consola()
         Usuario.validar_edad()
-    
     elif elect == 18:
         limpiar_consola()
         Usuario.eliminar()
-    
     elif elect == 19:
         limpiar_consola()
         Equipo.listar()
-    
     elif elect == 20:
         limpiar_consola()
         Equipo.agregar()
-    
     elif elect == 21:
         limpiar_consola()
         Equipo.ver_miembros()
-    
     elif elect == 22:
         limpiar_consola()
         Equipo.agregar_miembro()
-    
     elif elect == 23:
         limpiar_consola()
         Equipo.eliminar()
-    
     elif elect == 24:
         limpiar_consola()
         Torneo.listar()
-    
     elif elect == 25:
         limpiar_consola()
         Torneo.agregar()
-    
     elif elect == 26:
         limpiar_consola()
         Torneo.buscar_por_juego()
-    
     elif elect == 27:
         limpiar_consola()
         Torneo.inscribir_equipo()
-    
     elif elect == 28:
         limpiar_consola()
         Torneo.eliminar()
-    
     elif elect == 29:
         limpiar_consola()
         Torneo.listar_partidas()
-    
     elif elect == 30:
         limpiar_consola()
         Torneo.agregar_partida()
-    
     elif elect == 31:
         limpiar_consola()
         Torneo.actualizar_resultado()
-    
     elif elect == 32:
         limpiar_consola()
         Torneo.eliminar_partida()
-    
     elif elect == 33:
         limpiar_consola()
         Torneo.listar_sanciones()
-    
     elif elect == 34:
         limpiar_consola()
         Torneo.agregar_sancion()
-    
     elif elect == 35:
         limpiar_consola()
         Torneo.eliminar_sancion()
-    
     elif elect == 0:
         limpiar_consola()
         print("\nok bye...")
