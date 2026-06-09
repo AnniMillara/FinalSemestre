@@ -1,3 +1,6 @@
+# fechas
+from datetime import datetime
+
 # torneo.py
 from conexion import Conexion
 from ciudad import Ciudad
@@ -101,8 +104,14 @@ class Torneo:
         nombre = input("Nombre del torneo: ")
         juego = input("Juego: ")
         premio = input("Premio: ")
-        fecha_ini = input("Fecha inicio (AAAA-MM-DD): ")
-        fecha_fin = input("Fecha fin (AAAA-MM-DD): ")
+
+        # fecha de inicio
+        fecha_ini_str = input("Fecha inicio (AAAA-MM-DD HH:MM:SS): ")
+        fecha_ini = datetime.strptime(fecha_ini_str, "%Y-%m-%d %H:%M:%S")
+
+        # fecha de fin
+        fecha_fin_str = input("Fecha fin (AAAA-MM-DD HH:MM:SS): ")
+        fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d %H:%M:%S")
         
         # puede fallar pero hay demasiado codigo y me duee la cabeza
         if fecha_ini < fecha_fin:
@@ -147,7 +156,9 @@ class Torneo:
         
         Equipo.listar()
         id_equipo = input("Ingrese ID del equipo: ")
-        fecha_inscripcion = input("Fecha de inscripcion (AAAA-MM-DD): ")
+
+        fecha_inscripcion_str = input("Fecha de inscripcion (AAAA-MM-DD): ")
+        fecha_inscripcion = datetime.strptime(fecha_inscripcion_str, "%Y-%m-%d")
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
@@ -227,17 +238,8 @@ class Torneo:
         id_local = input("ID equipo local: ")
         id_visitante = input("ID equipo visitante: ")
         
-        fecha = input("Fecha (AAAA-MM-DD HH:MM:SS): ")
-
-        if len(fecha) != 19 or fecha[4] != '-' or fecha[7] != '-' or fecha[10] != ' ':
-            print("Formato incorrecto")
-            return
-
-        # transforma a numero
-        m, d, h, mi, s = int(fecha[5:7]), int(fecha[8:10]), int(fecha[11:13]), int(fecha[14:16]), int(fecha[17:19])
-        if not (1 <= m <= 12 and 1 <= d <= 31 and 0 <= h <= 23 and 0 <= mi <= 59 and 0 <= s <= 59):
-            print("Mes (1-12), día (1-31), hora (0-23), min/seg (0-59)")
-            return
+        fecha_str = input("Fecha (AAAA-MM-DD HH:MM:SS): ")
+        fecha = datetime.strptime(fecha_str, "%Y-%m-%d")
         
         ronda = input("Ronda: ")
         resultado_local = input("Resultado local: ")
