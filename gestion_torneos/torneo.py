@@ -58,7 +58,7 @@ class Torneo:
             INSERT INTO torneos (nombre_torneo, juego, premio, fecha_inicio, fecha_fin, organizador_id, ciudad_id, created_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(sql, (self.nombre_torneo, self.juego, self.premio, self.fecha_inicio, self.fecha_fin, self.organizador_id, self.ciudad_id, "system"))
+        cursor.execute(sql, (self.nombre_torneo, self.juego, self.premio, self.fecha_inicio.date(), self.fecha_fin.date(), self.organizador_id, self.ciudad_id, "system"))
         conexion.commit()
         print("\nTorneo agregado correctamente.")
         
@@ -239,7 +239,7 @@ class Torneo:
         id_visitante = input("ID equipo visitante: ")
         
         fecha_str = input("Fecha (AAAA-MM-DD HH:MM:SS): ")
-        fecha = datetime.strptime(fecha_str, "%Y-%m-%d")
+        fecha = datetime.strptime(fecha_str, "%Y-%m-%d %H:%M:%S")
         
         ronda = input("Ronda: ")
         resultado_local = input("Resultado local: ")

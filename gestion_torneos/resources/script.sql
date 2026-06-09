@@ -34,6 +34,18 @@ CREATE TABLE ciudades (
     FOREIGN KEY (pais_id) REFERENCES paises(id_pais)
 );
 
+CREATE TABLE equipos (
+    id_equipo INT AUTO_INCREMENT NOT NULL UNIQUE PRIMARY KEY,
+    nombre_equipo VARCHAR(100) NOT NULL,
+    fecha_creacion DATE NOT NULL,
+    capitan_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_by VARCHAR(50),
+    deleted TINYINT(1) DEFAULT 0
+);
+
 CREATE TABLE usuarios (
     id_usuario INT AUTO_INCREMENT NOT NULL UNIQUE PRIMARY KEY,
     nombre_completo VARCHAR(100) NOT NULL,
@@ -42,41 +54,15 @@ CREATE TABLE usuarios (
     ciudad_id INT NOT NULL,
     edad INT NOT NULL,
     tipo_usuario_id INT NOT NULL,
+    equipo_id INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by VARCHAR(50),
     updated_by VARCHAR(50),
     deleted TINYINT(1) DEFAULT 0,
     FOREIGN KEY (tipo_usuario_id) REFERENCES tipo_usuarios(id_tipo_usuario),
-    FOREIGN KEY (ciudad_id) REFERENCES ciudades(id_ciudad)
-);
-
-CREATE TABLE equipos (
-    id_equipo INT AUTO_INCREMENT NOT NULL UNIQUE PRIMARY KEY,
-    nombre_equipo VARCHAR(100) NOT NULL,
-    fecha_creacion DATE NOT NULL,  -- ← Esta columna es obligatoria
-    capitan_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by VARCHAR(50),
-    updated_by VARCHAR(50),
-    deleted TINYINT(1) DEFAULT 0,
-    FOREIGN KEY (capitan_id) REFERENCES usuarios(id_usuario)
-);
-
-CREATE TABLE equipo_usuarios (
-    id_equipo_usuario INT AUTO_INCREMENT NOT NULL PRIMARY KEY,  -- ← Corregido: AUTO_INCREMENT
-    equipo_id INT NOT NULL,
-    usuario_id INT NOT NULL,
-    fecha_ingreso DATE NOT NULL,
-    fecha_salida DATE DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by VARCHAR(50),
-    updated_by VARCHAR(50),
-    deleted TINYINT(1) DEFAULT 0,
-    FOREIGN KEY (equipo_id) REFERENCES equipos(id_equipo),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id_usuario)
+    FOREIGN KEY (ciudad_id) REFERENCES ciudades(id_ciudad),
+    FOREIGN KEY (equipo_id) REFERENCES equipos(id_equipo)
 );
 
 CREATE TABLE torneos (
@@ -178,31 +164,22 @@ VALUES
     ('Temuco', 1, 'system', 'system'),
     ('Rio de janeiro', 4, 'system', 'system'),
     ('Lima', 5, 'system', 'system');
-    
-INSERT INTO usuarios (nombre_completo, email, username, ciudad_id, edad, tipo_usuario_id, created_by, updated_by)
-VALUES 
-    ('Lautaro Ezequiel Martínez', 'lautaro.martinez@email.com', 'lautarito13', 2, 22, 1, 'system', 'system'),
-    ('Camila Belén Rojas', 'camila.rojas@email.com', 'camirojas', 2, 19, 3, 'system', 'system'),
-    ('Mateo Nicolás Fernández', 'mateo.fernandez@email.com', 'mateo_nfc', 2, 24, 2, 'system', 'system'),
-    ('Valentina Soledad Lagos', 'valentina.lagos@email.com', 'vale_lagos', 2, 21, 1, 'system', 'system'),
-    ('Tomás Ignacio Paredes', 'tomas.paredes@email.com', 'tomasparedes', 2, 20, 3, 'system', 'system'),
-    ('Julieta Milagros Domínguez', 'julieta.dominguez@email.com', 'julidom', 2, 23, 3, 'system', 'system'),
-    ('Facundo Ariel Navarro', 'facundo.navarro@email.com', 'facundo_nav', 2, 18, 4, 'system', 'system'),
-    ('Sofía Belén Espinosa', 'sofia.espinosa@email.com', 'sofieesp', 2, 25, 5, 'system', 'system');
 
 INSERT INTO equipos (nombre_equipo, fecha_creacion, capitan_id, created_by, updated_by)
 VALUES 
     ('Bandamax', '2024-01-01', 6, 'system', 'system'),
     ('LosLucianos', '2024-01-01', 5, 'system', 'system');
 
-INSERT INTO equipo_usuarios (equipo_id, usuario_id, fecha_ingreso, created_by, updated_by)
+INSERT INTO usuarios (nombre_completo, email, username, ciudad_id, edad, tipo_usuario_id, equipo_id, created_by, updated_by)
 VALUES 
-    (1, 6, '2024-01-15', 'system', 'system'),
-    (1, 1, '2024-01-15', 'system', 'system'),
-    (1, 4, '2024-01-20', 'system', 'system'),
-    (2, 5, '2024-02-10', 'system', 'system'),
-    (2, 2, '2024-02-10', 'system', 'system'),
-    (2, 3, '2024-02-15', 'system', 'system');
+    ('Lautaro Ezequiel Martínez', 'lautaro.martinez@email.com', 'lautarito13', 2, 22, 1, 1, 'system', 'system'),
+    ('Camila Belén Rojas', 'camila.rojas@email.com', 'camirojas', 2, 19, 3, 2, 'system', 'system'),
+    ('Mateo Nicolás Fernández', 'mateo.fernandez@email.com', 'mateo_nfc', 2, 24, 2, 2, 'system', 'system'),
+    ('Valentina Soledad Lagos', 'valentina.lagos@email.com', 'vale_lagos', 2, 21, 1, 1, 'system', 'system'),
+    ('Tomás Ignacio Paredes', 'tomas.paredes@email.com', 'tomasparedes', 2, 20, 3, 2, 'system', 'system'),
+    ('Julieta Milagros Domínguez', 'julieta.dominguez@email.com', 'julidom', 2, 23, 3, 1, 'system', 'system'),
+    ('Facundo Ariel Navarro', 'facundo.navarro@email.com', 'facundo_nav', 2, 18, 4, NULL, 'system', 'system'),
+    ('Sofía Belén Espinosa', 'sofia.espinosa@email.com', 'sofieesp', 2, 25, 5, NULL, 'system', 'system');
 
 INSERT INTO torneos (nombre_torneo, juego, premio, fecha_inicio, fecha_fin, organizador_id, ciudad_id, created_by, updated_by)
 VALUES 

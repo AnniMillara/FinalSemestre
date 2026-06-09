@@ -55,9 +55,8 @@ class Equipo:
         
         self.id_equipo = cursor.lastrowid
         
-        # Agregar al capitan como miembro del equipo
-        sql_miembro = "INSERT INTO equipo_usuarios (equipo_id, usuario_id, fecha_ingreso, created_by) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql_miembro, (self.id_equipo, self.capitan_id, self.fecha_creacion, "system"))
+        # Asignar el capitan al equipo (actualizar su equipo_id)
+        cursor.execute("UPDATE usuarios SET equipo_id = %s WHERE id_usuario = %s", (self.id_equipo, self.capitan_id))
         conexion.commit()
         
         print(f"\nEquipo '{self.nombre_equipo}' agregado correctamente.")
@@ -65,26 +64,62 @@ class Equipo:
         cursor.close()
         conexion.close()
     
-    def agregar_miembro(self, usuario_id, fecha_ingreso):
-        # Agrega un miembro al equipo
+    def agregar_miembro(self, usuario_id):
+        # Agrega un miembro al equipo (actualiza su equipo_id)
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Verificar si el usuario ya es miembro
-        cursor.execute("SELECT id_equipo_usuario FROM equipo_usuarios WHERE equipo_id = %s AND usuario_id = %s AND deleted = 0", 
-                    (self.id_equipo, usuario_id))
-        if cursor.fetchone():
-            print("\nEl usuario ya es miembro de este equipo.")
+        # Verificar si el usuario ya pertenece a otro equipo
+        cursor.execute("SELECT equipo_id FROM usuarios WHERE id_usuario = %s AND deleted = 0", (usuario_id,))
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            print("\nEl usuario no existe.")
             cursor.close()
             conexion.close()
             return
         
-        # Insertar miembro
-        sql = "INSERT INTO equipo_usuarios (equipo_id, usuario_id, fecha_ingreso, created_by) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (self.id_equipo, usuario_id, fecha_ingreso, "system"))
+        if usuario[0] is not None:
+            print("\nEl usuario ya pertenece a un equipo.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        # Asignar usuario al equipo
+        cursor.execute("UPDATE usuarios SET equipo_id = %s WHERE id_usuario = %s", (self.id_equipo, usuario_id))
         conexion.commit()
         
         print(f"\nUsuario agregado al equipo '{self.nombre_equipo}'.")
+        
+        cursor.close()
+        conexion.close()
+    
+    def eliminar_miembro(self, usuario_id):
+        # Elimina un miembro del equipo (quita su equipo_id)
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        
+        # Verificar que el usuario esté en este equipo
+        cursor.execute("SELECT equipo_id FROM usuarios WHERE id_usuario = %s AND equipo_id = %s AND deleted = 0", 
+                      (usuario_id, self.id_equipo))
+        if not cursor.fetchone():
+            print("\nEl usuario no pertenece a este equipo.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        # No se puede eliminar al capitan
+        if int(usuario_id) == int(self.capitan_id):
+            print("\nNo se puede eliminar al capitan del equipo.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        # Quitar la asignacion del equipo
+        cursor.execute("UPDATE usuarios SET equipo_id = NULL WHERE id_usuario = %s", (usuario_id,))
+        conexion.commit()
+        
+        print(f"\nUsuario eliminado del equipo '{self.nombre_equipo}'.")
         
         cursor.close()
         conexion.close()
@@ -96,7 +131,8 @@ class Equipo:
         cursor = conexion.cursor()
         
         sql = """
-            SELECT e.id_equipo, e.nombre_equipo, e.fecha_creacion, u.nombre_completo
+            SELECT e.id_equipo, e.nombre_equipo, e.fecha_creacion, u.nombre_completo,
+                   (SELECT COUNT(*) FROM usuarios WHERE equipo_id = e.id_equipo AND deleted = 0) as total_miembros
             FROM equipos e
             LEFT JOIN usuarios u ON e.capitan_id = u.id_usuario
             WHERE e.deleted = 0
@@ -106,7 +142,7 @@ class Equipo:
         
         print("\n===== EQUIPOS =====")
         for e in equipos:
-            print(f"ID: {e[0]} | Equipo: {e[1]} | Capitan: {e[3]}")
+            print(f"ID: {e[0]} | Equipo: {e[1]} | Capitan: {e[3]} | Miembros: {e[4]}")
         
         cursor.close()
         conexion.close()
@@ -116,10 +152,19 @@ class Equipo:
         # Interfaz para agregar un nuevo equipo
         print("\n===== NUEVO EQUIPO =====")
         
-        print("\nUSUARIOS DISPONIBLES")
-        Usuario.listar_simple()
+        # Mostrar solo usuarios que NO tienen equipo
+        print("\nUSUARIOS SIN EQUIPO (pueden ser capitanes)")
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        cursor.execute("SELECT id_usuario, nombre_completo, username FROM usuarios WHERE equipo_id IS NULL AND deleted = 0 AND tipo_usuario_id = 3")
+        usuarios_sin_equipo = cursor.fetchall()
+        cursor.close()
+        conexion.close()
         
-        print("\nNOTA: El capitan debe ser tipo 'Jugador Lider'")
+        for u in usuarios_sin_equipo:
+            print(f"ID: {u[0]} | {u[1]} | @{u[2]}")
+        
+        print("\nNOTA: El capitan debe ser tipo 'Jugador Lider' y no tener equipo")
         capitan_id = input("\nID del capitan: ")
         nombre = input("Nombre del equipo: ")
         fecha = input("Fecha creacion (AAAA-MM-DD): ")
@@ -137,12 +182,11 @@ class Equipo:
         cursor = conexion.cursor()
         
         sql = """
-            SELECT u.id_usuario, u.nombre_completo, u.username, eu.fecha_ingreso, t.nombre_tipo
-            FROM equipo_usuarios eu
-            JOIN usuarios u ON eu.usuario_id = u.id_usuario
+            SELECT u.id_usuario, u.nombre_completo, u.username, u.edad, t.nombre_tipo
+            FROM usuarios u
             JOIN tipo_usuarios t ON u.tipo_usuario_id = t.id_tipo_usuario
-            WHERE eu.equipo_id = %s AND eu.deleted = 0 AND u.deleted = 0
-            ORDER BY eu.fecha_ingreso ASC
+            WHERE u.equipo_id = %s AND u.deleted = 0
+            ORDER BY u.id_usuario ASC
         """
         cursor.execute(sql, (id_equipo,))
         miembros = cursor.fetchall()
@@ -152,7 +196,8 @@ class Equipo:
             print("No hay miembros en este equipo.")
         else:
             for m in miembros:
-                print(f"ID: {m[0]} | {m[1]} | @{m[2]} | Tipo: {m[4]} | Ingreso: {m[3]}")
+                capitan_texto = " (Capitan)" if m[0] == int(id_equipo) else ""
+                print(f"ID: {m[0]} | {m[1]} | @{m[2]} | Tipo: {m[4]}{capitan_texto}")
         
         cursor.close()
         conexion.close()
@@ -164,10 +209,19 @@ class Equipo:
         Equipo.listar()
         id_equipo = input("\nID del equipo: ")
         
-        print("\nUSUARIOS DISPONIBLES")
-        Usuario.listar_simple()
+        # Mostrar solo usuarios que NO tienen equipo
+        print("\nUSUARIOS SIN EQUIPO")
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        cursor.execute("SELECT id_usuario, nombre_completo, username FROM usuarios WHERE equipo_id IS NULL AND deleted = 0")
+        usuarios_sin_equipo = cursor.fetchall()
+        
+        for u in usuarios_sin_equipo:
+            print(f"ID: {u[0]} | {u[1]} | @{u[2]}")
+        
         usuario_id = input("ID del usuario a agregar: ")
-        fecha_ingreso = input("Fecha de ingreso (AAAA-MM-DD): ")
+        cursor.close()
+        conexion.close()
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
@@ -179,23 +233,66 @@ class Equipo:
         if equipo_data:
             equipo = Equipo(equipo_data[1], None, None)
             equipo.id_equipo = int(id_equipo)
-            equipo.agregar_miembro(usuario_id, fecha_ingreso)
+            equipo.agregar_miembro(usuario_id)
+        else:
+            print("\nEquipo no encontrado.")
+    
+    @staticmethod
+    def eliminar_miembro_ui():
+        # Interfaz para eliminar un miembro de un equipo
+        print("\n===== ELIMINAR MIEMBRO DE EQUIPO =====")
+        Equipo.listar()
+        id_equipo = input("\nID del equipo: ")
+        
+        # Mostrar miembros del equipo
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        cursor.execute("""
+            SELECT u.id_usuario, u.nombre_completo, u.username
+            FROM usuarios u
+            WHERE u.equipo_id = %s AND u.deleted = 0
+        """, (id_equipo,))
+        miembros = cursor.fetchall()
+        
+        print("\nMIEMBROS DEL EQUIPO")
+        for m in miembros:
+            print(f"ID: {m[0]} | {m[1]} | @{m[2]}")
+        
+        usuario_id = input("\nID del usuario a eliminar: ")
+        cursor.close()
+        conexion.close()
+        
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        cursor.execute("SELECT id_equipo, nombre_equipo, capitan_id FROM equipos WHERE id_equipo = %s AND deleted = 0", (id_equipo,))
+        equipo_data = cursor.fetchone()
+        cursor.close()
+        conexion.close()
+        
+        if equipo_data:
+            equipo = Equipo(equipo_data[1], None, equipo_data[2])
+            equipo.id_equipo = int(id_equipo)
+            equipo.eliminar_miembro(usuario_id)
         else:
             print("\nEquipo no encontrado.")
     
     @staticmethod
     def eliminar():
-        # Elimina logicamente un equipo
+        # Elimina logicamente un equipo (primero libera a sus miembros)
         Equipo.listar()
         id_equipo = input("\nIngrese ID del equipo: ")
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Liberar a todos los miembros del equipo
+        cursor.execute("UPDATE usuarios SET equipo_id = NULL WHERE equipo_id = %s", (id_equipo,))
+        
+        # Eliminar logicamente el equipo
         sql = "UPDATE equipos SET deleted = 1 WHERE id_equipo = %s"
         cursor.execute(sql, (id_equipo,))
         conexion.commit()
-        print("\nEquipo eliminado correctamente.")
+        print("\nEquipo eliminado correctamente. Los miembros quedaron sin equipo.")
         
         cursor.close()
         conexion.close()
