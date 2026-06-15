@@ -207,9 +207,9 @@ VALUES
     (3, 1, 2, '2025-06-10 20:00:00', 1, 16, 14, 60, 1, 'system', 'system'),
     (3, 2, 1, '2025-06-17 20:00:00', 2, 12, 16, 58, 1, 'system', 'system');
 
-INSERT INTO sanciones (usuario_id, torneo_id, partida_id, motivo, fecha_sancion, dias_suspension, created_by, updated_by)
+INSERT INTO sanciones (usuario_id, torneo_id, partida_id, motivo, dias_suspension, created_by, updated_by)
 VALUES 
-    (1, 1, 1, 'Conducta antideportiva - insultos al rival', '2025-03-16', 3, 'system', 'system'),
-    (5, 2, 4, 'Llegada tarde sin justificación', '2025-01-21', 1, 'system', 'system'),
-    (2, 1, 2, 'Uso de lenguaje ofensivo en chat global', '2025-03-23', 2, 'system', 'system'),
-    (4, 3, 7, 'Abandono voluntario de la partida', '2025-06-11', 5, 'system', 'system');
+    (1, 1, 1, 'Conducta antideportiva - insultos al rival', 3, 'system', 'system'),
+    (5, 2, 4, 'Llegada tarde sin justificación', 1, 'system', 'system'),
+    (2, 1, 2, 'Uso de lenguaje ofensivo en chat global', 2, 'system', 'system'),
+    (4, 3, 7, 'Abandono voluntario de la partida', 5, 'system', 'system');
