@@ -8,9 +8,11 @@ from torneo import Torneo
 from pais import Pais
 
 def limpiar_consola():
+    # os.system: limpia terminal
     os.system('cls')
 
 go = True
+# Bucle while: menu principal
 while go:
     print("\n\nSISTEMA DE GESTION DE TORNEOS\n")
     
@@ -67,6 +69,7 @@ while go:
     
     print("\n  0. Salir\n")
     
+    # Estructura de control: captura opcion
     elect = int(input("\nSeleccione una opcion: "))
     
     if elect == 1:

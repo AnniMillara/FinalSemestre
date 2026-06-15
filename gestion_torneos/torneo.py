@@ -18,17 +18,31 @@ class Torneo:
         self.ciudad_id = ciudad_id
     
     def guardar(self):
-        # Guarda un nuevo torneo en la base de datos
+        # Metodo: INSERT en BD
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Validar que el organizador existe y es tipo "Admin"
-        cursor.execute("""
+        # Estructura de control: valida campos vacios
+        if not self.nombre_torneo or self.nombre_torneo.strip() == "":
+            print("\nEl nombre del torneo no puede estar vacio.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        if not self.juego or self.juego.strip() == "":
+            print("\nEl nombre del juego no puede estar vacio.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        # Estructura de control: valida organizador tipo Admin
+        sql = """
             SELECT u.id_usuario, t.nombre_tipo
             FROM usuarios u
             JOIN tipo_usuarios t ON u.tipo_usuario_id = t.id_tipo_usuario
             WHERE u.id_usuario = %s AND u.deleted = 0
-        """, (self.organizador_id,))
+        """
+        cursor.execute(sql, (self.organizador_id,))
         organizador = cursor.fetchone()
         
         if not organizador:
@@ -38,21 +52,22 @@ class Torneo:
             return
         
         if organizador[1].lower() != "admin":
-            print(f"\nEl usuario {organizador[1]} no es 'Admin'.")
+            print(f"\nEl usuario es '{organizador[1]}', no es 'Admin'.")
             print("Solo los usuarios con tipo 'Admin' pueden ser organizadores.")
             cursor.close()
             conexion.close()
             return
         
-        # Validar que la ciudad existe
-        cursor.execute("SELECT id_ciudad FROM ciudades WHERE id_ciudad = %s AND deleted = 0", (self.ciudad_id,))
+        # Estructura de control: valida existencia ciudad
+        sql = """SELECT id_ciudad FROM ciudades WHERE id_ciudad = %s AND deleted = 0"""
+        cursor.execute(sql, (self.ciudad_id,))
         if not cursor.fetchone():
             print("\nLa ciudad no existe. Primero debes crear la ciudad.")
             cursor.close()
             conexion.close()
             return
         
-        # Insertar torneo
+        # INSERT
         sql = """
             INSERT INTO torneos (nombre_torneo, juego, premio, fecha_inicio, fecha_fin, organizador_id, ciudad_id, created_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
@@ -66,7 +81,7 @@ class Torneo:
     
     @staticmethod
     def listar():
-        # Lista todos los torneos activos
+        # Metodo estatico: SELECT all
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -79,49 +94,65 @@ class Torneo:
         cursor.execute(sql)
         torneos = cursor.fetchall()
         
-        print("\n\nTORNEOS\n")
+        print("\n===== TORNEOS =====")
+        # Bucle for: recorre resultados
         for t in torneos:
-            print(f"ID: {t[0]} | Torneo: {t[1]} | Juego: {t[2]} | Ciudad: {t[4]}")
+            ciudad_nombre = t[4] if t[4] else "Sin ciudad"
+            premio_texto = t[3] if t[3] else "Sin premio"
+            print(f"ID: {t[0]} | Torneo: {t[1]} | Juego: {t[2]} | Premio: {premio_texto} | Ciudad: {ciudad_nombre}")
         
         cursor.close()
         conexion.close()
     
     @staticmethod
     def agregar():
-        # Interfaz para agregar un nuevo torneo
+        # Interfaz: input usuario
         print("\n===== NUEVO TORNEO =====")
         
         print("\nCIUDADES DISPONIBLES")
         Ciudad.listar()
-        ciudad_id = input("\nID de la ciudad: ")
+        ciudad_id = int(input("\nID de la ciudad: "))
         
         print("\nORGANIZADORES (usuarios tipo Admin)")
         Usuario.listar_simple()
-        organizador_id = input("\nID del organizador: ")
+        organizador_id = int(input("\nID del organizador: "))
         
         nombre = input("Nombre del torneo: ")
+        
+        if not nombre or nombre.strip() == "":
+            print("\nEl nombre del torneo no puede estar vacio.")
+            return
+        
         juego = input("Juego: ")
+        
+        if not juego or juego.strip() == "":
+            print("\nEl nombre del juego no puede estar vacio.")
+            return
+        
         premio = input("Premio: ")
-
-        # fecha de inicio
+        
+        # datetime: conversion de string a objeto fecha
         fecha_ini_str = input("Fecha inicio (AAAA-MM-DD HH:MM:SS): ")
         fecha_ini = datetime.strptime(fecha_ini_str, "%Y-%m-%d %H:%M:%S")
-
-        # fecha de fin
+        
         fecha_fin_str = input("Fecha fin (AAAA-MM-DD HH:MM:SS): ")
         fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d %H:%M:%S")
         
-        # puede fallar pero hay demasiado codigo y me duee la cabeza
+        # Estructura de control: valida fechas
         if fecha_ini < fecha_fin:
             torneo = Torneo(nombre, juego, premio, fecha_ini, fecha_fin, organizador_id, ciudad_id)
             torneo.guardar()
         else:
-            print("Ingresar fecha valida")
+            print("\nLa fecha de inicio debe ser menor a la fecha de fin.")
     
     @staticmethod
     def buscar_por_juego():
-        # Busca torneos por nombre del juego
+        # Metodo estatico: SELECT con LIKE
         juego_buscar = input("\nIngrese el nombre del juego a buscar: ")
+        
+        if not juego_buscar or juego_buscar.strip() == "":
+            print("\nEl nombre del juego no puede estar vacio.")
+            return
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
@@ -136,34 +167,50 @@ class Torneo:
         resultados = cursor.fetchall()
         
         print("\n===== RESULTADOS =====")
-        if len(resultados) == 0:
-            print(f"No se encontraron torneos del juego '{juego_buscar}'.")
-        else:
-            for t in resultados:
-                ciudad_nombre = t[4] if t[4] else "Sin ciudad"
-                print(f"ID: {t[0]} | {t[1]} | {t[2]} | Premio: {t[3]} | Ciudad: {ciudad_nombre}")
+        for t in resultados:
+            ciudad_nombre = t[4] if t[4] else "Sin ciudad"
+            print(f"ID: {t[0]} | {t[1]} | {t[2]} | Premio: {t[3]} | Ciudad: {ciudad_nombre}")
         
         cursor.close()
         conexion.close()
     
     @staticmethod
     def inscribir_equipo():
-        # Inscribe un equipo en un torneo
+        # Interfaz: INSERT torneo_equipos
         Torneo.listar()
-        id_torneo = input("\nIngrese ID del torneo: ")
+        id_torneo = int(input("\nIngrese ID del torneo: "))
         
         Equipo.listar()
-        id_equipo = input("Ingrese ID del equipo: ")
-
+        id_equipo = int(input("Ingrese ID del equipo: "))
+        
+        # datetime: conversion fecha
         fecha_inscripcion_str = input("Fecha de inscripcion (AAAA-MM-DD): ")
         fecha_inscripcion = datetime.strptime(fecha_inscripcion_str, "%Y-%m-%d")
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Verificar si el equipo ya esta inscrito
-        cursor.execute("SELECT id_torneo_equipo FROM torneo_equipos WHERE torneo_id = %s AND equipo_id = %s AND deleted = 0", 
-                    (id_torneo, id_equipo))
+        # Estructura de control: verifica existencia torneo
+        sql = """SELECT id_torneo FROM torneos WHERE id_torneo = %s AND deleted = 0"""
+        cursor.execute(sql, (id_torneo,))
+        if not cursor.fetchone():
+            print("\nEl torneo no existe.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        # Estructura de control: verifica existencia equipo
+        sql = """SELECT id_equipo FROM equipos WHERE id_equipo = %s AND deleted = 0"""
+        cursor.execute(sql, (id_equipo,))
+        if not cursor.fetchone():
+            print("\nEl equipo no existe.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        # Estructura de control: verifica duplicado
+        sql = """SELECT id_torneo_equipo FROM torneo_equipos WHERE torneo_id = %s AND equipo_id = %s AND deleted = 0"""
+        cursor.execute(sql, (id_torneo, id_equipo))
         
         if cursor.fetchone():
             print("\nEl equipo ya esta inscrito en este torneo.")
@@ -171,7 +218,7 @@ class Torneo:
             conexion.close()
             return
         
-        # Insertar inscripcion
+        # INSERT
         sql = """
             INSERT INTO torneo_equipos (torneo_id, equipo_id, fecha_inscripcion, created_by)
             VALUES (%s, %s, %s, %s)
@@ -186,14 +233,14 @@ class Torneo:
     
     @staticmethod
     def eliminar():
-        # Elimina logicamente un torneo
+        # Interfaz: DELETE logico torneo
         Torneo.listar()
-        id_torneo = input("\nIngrese ID del torneo: ")
+        id_torneo = int(input("\nIngrese ID del torneo: "))
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = "UPDATE torneos SET deleted = 1 WHERE id_torneo = %s"
+        sql = """UPDATE torneos SET deleted = 1 WHERE id_torneo = %s"""
         cursor.execute(sql, (id_torneo,))
         conexion.commit()
         print("\nTorneo eliminado correctamente.")
@@ -203,7 +250,7 @@ class Torneo:
     
     @staticmethod
     def listar_partidas():
-        # Lista todas las partidas
+        # Metodo estatico: SELECT con JOIN
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -228,29 +275,38 @@ class Torneo:
     
     @staticmethod
     def agregar_partida():
-        # Agrega una nueva partida
+        # Interfaz: INSERT partida
         Torneo.listar()
-        id_torneo = input("\nID del torneo: ")
+        id_torneo = int(input("\nID del torneo: "))
         
         Equipo.listar()
-        id_local = input("ID equipo local: ")
-        id_visitante = input("ID equipo visitante: ")
+        id_local = int(input("ID equipo local: "))
+        id_visitante = int(input("ID equipo visitante: "))
         
+        # Estructura de control: equipos diferentes
+        if id_local == id_visitante:
+            print("\nEl equipo local y visitante no pueden ser el mismo.")
+            return
+        
+        # datetime: conversion
         fecha_str = input("Fecha (AAAA-MM-DD HH:MM:SS): ")
         fecha = datetime.strptime(fecha_str, "%Y-%m-%d %H:%M:%S")
         
-        ronda = input("Ronda: ")
-        resultado_local = input("Resultado local: ")
-        resultado_visitante = input("Resultado visitante: ")
-        duracion = input("Duracion (minutos): ")
+        ronda = int(input("Ronda: "))
+        resultado_local = int(input("Resultado local: "))
+        resultado_visitante = int(input("Resultado visitante: "))
+        duracion = int(input("Duracion (minutos): "))
         
-        ganador_id = input("ID del ganador (0 si no aplica): ")
-        if ganador_id == "0":
+        ganador_input = input("ID del ganador (0 si no aplica): ")
+        if ganador_input == "0":
             ganador_id = None
+        else:
+            ganador_id = int(ganador_input)
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # INSERT
         sql = """
             INSERT INTO partidas (torneo_id, equipo_local_id, equipo_visitante_id, fecha_partida, 
                                   ronda, resultado_local, resultado_visitante, duracion_minutos, ganador_id, created_by)
@@ -265,18 +321,18 @@ class Torneo:
     
     @staticmethod
     def actualizar_resultado():
-        # Actualiza el resultado de una partida
+        # Interfaz: UPDATE resultado
         Torneo.listar_partidas()
-        id_partida = input("\nID de la partida: ")
+        id_partida = int(input("\nID de la partida: "))
         
-        nuevo_local = input("Nuevo resultado local: ")
-        nuevo_visitante = input("Nuevo resultado visitante: ")
-        ganador_id = input("ID del ganador: ")
+        nuevo_local = int(input("Nuevo resultado local: "))
+        nuevo_visitante = int(input("Nuevo resultado visitante: "))
+        ganador_id = int(input("ID del ganador: "))
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = "UPDATE partidas SET resultado_local = %s, resultado_visitante = %s, ganador_id = %s WHERE id_partida = %s"
+        sql = """UPDATE partidas SET resultado_local = %s, resultado_visitante = %s, ganador_id = %s WHERE id_partida = %s"""
         cursor.execute(sql, (nuevo_local, nuevo_visitante, ganador_id, id_partida))
         conexion.commit()
         print("\nResultado actualizado correctamente.")
@@ -286,14 +342,14 @@ class Torneo:
     
     @staticmethod
     def eliminar_partida():
-        # Elimina logicamente una partida
+        # Interfaz: DELETE logico partida
         Torneo.listar_partidas()
-        id_partida = input("\nID de la partida: ")
+        id_partida = int(input("\nID de la partida: "))
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = "UPDATE partidas SET deleted = 1 WHERE id_partida = %s"
+        sql = """UPDATE partidas SET deleted = 1 WHERE id_partida = %s"""
         cursor.execute(sql, (id_partida,))
         conexion.commit()
         print("\nPartida eliminada correctamente.")
@@ -303,12 +359,12 @@ class Torneo:
     
     @staticmethod
     def listar_sanciones():
-        # Lista todas las sanciones
+        # Metodo estatico: SELECT sanciones
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
         sql = """
-            SELECT s.id_sancion, u.nombre_completo, t.nombre_torneo, s.motivo, s.fecha_sancion, s.dias_suspension
+            SELECT s.id_sancion, u.nombre_completo, t.nombre_torneo, s.motivo, s.created_at, s.dias_suspension
             FROM sanciones s
             JOIN usuarios u ON s.usuario_id = u.id_usuario
             JOIN torneos t ON s.torneo_id = t.id_torneo
@@ -326,27 +382,30 @@ class Torneo:
     
     @staticmethod
     def agregar_sancion():
-        # Agrega una nueva sancion
+        # Interfaz: INSERT sancion
         Usuario.listar_simple()
-        id_usuario = input("\nID del usuario: ")
+        id_usuario = int(input("\nID del usuario: "))
         
         Torneo.listar()
-        id_torneo = input("ID del torneo: ")
+        id_torneo = int(input("ID del torneo: "))
         
         Torneo.listar_partidas()
-        id_partida = input("ID de la partida (0 si no aplica): ")
-        if id_partida == "0":
+        partida_input = input("ID de la partida (0 si no aplica): ")
+        if partida_input == "0":
             id_partida = None
+        else:
+            id_partida = int(partida_input)
         
         motivo = input("Motivo de la sancion: ")
-        dias = input("Dias de suspension: ")
+        dias = int(input("Dias de suspension: "))
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # INSERT con CURDATE()
         sql = """
-            INSERT INTO sanciones (usuario_id, torneo_id, partida_id, motivo, fecha_sancion, dias_suspension, created_by)
-            VALUES (%s, %s, %s, %s, CURDATE(), %s, %s)
+            INSERT INTO sanciones (usuario_id, torneo_id, partida_id, motivo, dias_suspension, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """
         cursor.execute(sql, (id_usuario, id_torneo, id_partida, motivo, dias, "system"))
         conexion.commit()
@@ -357,14 +416,14 @@ class Torneo:
     
     @staticmethod
     def eliminar_sancion():
-        # Elimina logicamente una sancion
+        # Interfaz: DELETE logico sancion
         Torneo.listar_sanciones()
-        id_sancion = input("\nID de la sancion: ")
+        id_sancion = int(input("\nID de la sancion: "))
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = "UPDATE sanciones SET deleted = 1 WHERE id_sancion = %s"
+        sql = """UPDATE sanciones SET deleted = 1 WHERE id_sancion = %s"""
         cursor.execute(sql, (id_sancion,))
         conexion.commit()
         print("\nSancion eliminada correctamente.")

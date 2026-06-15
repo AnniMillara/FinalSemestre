@@ -6,12 +6,20 @@ class Pais:
         self.nombre_pais = nombre_pais
     
     def guardar(self):
-        # Guarda un nuevo pais en la base de datos
+        # Metodo: INSERT en BD
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Verificar si el pais ya existe
-        cursor.execute("SELECT id_pais FROM paises WHERE nombre_pais = %s", (self.nombre_pais,))
+        # Estructura de control: valida campo vacio
+        if not self.nombre_pais or self.nombre_pais.strip() == "":
+            print("\nEl nombre del pais no puede estar vacio.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        # Estructura de control: verifica existencia previa
+        sql = """SELECT id_pais FROM paises WHERE nombre_pais = %s"""
+        cursor.execute(sql, (self.nombre_pais,))
         existe = cursor.fetchone()
         
         if existe:
@@ -20,8 +28,8 @@ class Pais:
             conexion.close()
             return
         
-        # Insertar nuevo pais
-        sql = "INSERT INTO paises (nombre_pais, created_by) VALUES (%s, %s)"
+        # INSERT
+        sql = """INSERT INTO paises (nombre_pais, created_by) VALUES (%s, %s)"""
         cursor.execute(sql, (self.nombre_pais, "system"))
         conexion.commit()
         print("\nPais agregado correctamente.")
@@ -31,15 +39,16 @@ class Pais:
     
     @staticmethod
     def listar():
-        # Lista todos los paises activos
+        # Metodo estatico: SELECT all
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = "SELECT id_pais, nombre_pais FROM paises WHERE deleted = 0"
+        sql = """SELECT id_pais, nombre_pais FROM paises WHERE deleted = 0"""
         cursor.execute(sql)
         paises = cursor.fetchall()
         
         print("\n===== PAISES =====")
+        # Bucle for: recorre resultados
         for p in paises:
             print(f"ID: {p[0]} | Pais: {p[1]}")
         
@@ -48,11 +57,11 @@ class Pais:
     
     @staticmethod
     def listar_simple():
-        # Lista paises en formato simple (para selects)
+        # Metodo estatico: SELECT formato simple
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = "SELECT id_pais, nombre_pais FROM paises WHERE deleted = 0"
+        sql = """SELECT id_pais, nombre_pais FROM paises WHERE deleted = 0"""
         cursor.execute(sql)
         paises = cursor.fetchall()
         
@@ -65,11 +74,12 @@ class Pais:
     
     @staticmethod
     def existe(pais_id):
-        # Verifica si un pais existe por su ID
+        # Metodo estatico: verifica existencia por ID
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        cursor.execute("SELECT id_pais FROM paises WHERE id_pais = %s AND deleted = 0", (pais_id,))
+        sql = """SELECT id_pais FROM paises WHERE id_pais = %s AND deleted = 0"""
+        cursor.execute(sql, (pais_id,))
         resultado = cursor.fetchone()
         
         cursor.close()
@@ -79,15 +89,21 @@ class Pais:
     
     @staticmethod
     def agregar():
-        # Interfaz para agregar un nuevo pais
+        # Interfaz: input usuario
         print("\n===== NUEVO PAIS =====")
         nombre = input("Nombre del pais: ")
+        
+        # Estructura de control: valida entrada
+        if not nombre or nombre.strip() == "":
+            print("\nEl nombre del pais no puede estar vacio.")
+            return
+        
         nuevo_pais = Pais(nombre)
         nuevo_pais.guardar()
     
     @staticmethod
     def eliminar():
-        # Elimina logicamente un pais (verifica que no tenga ciudades asociadas)
+        # Interfaz: DELETE logico
         Pais.listar()
         
         id_pais = int(input("\nIngrese ID del pais: "))
@@ -95,19 +111,19 @@ class Pais:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Verificar si el pais tiene ciudades asociadas
-        cursor.execute("SELECT COUNT(*) FROM ciudades WHERE pais_id = %s AND deleted = 0", (id_pais,))
-        total_ciudades = cursor.fetchone()[0]
+        # Estructura de control: verifica ciudades asociadas
+        sql = """SELECT id_ciudad FROM ciudades WHERE pais_id = %s AND deleted = 0 LIMIT 1"""
+        cursor.execute(sql, (id_pais,))
         
-        if total_ciudades > 0:
-            print(f"\nNo se puede eliminar el pais. Tiene {total_ciudades} ciudades asociadas.")
+        if cursor.fetchone():
+            print("\nNo se puede eliminar el pais. Tiene ciudades asociadas.")
             print("Primero elimine las ciudades de este pais.")
             cursor.close()
             conexion.close()
             return
         
-        # Eliminacion logica
-        sql = "UPDATE paises SET deleted = 1 WHERE id_pais = %s"
+        # UPDATE logico
+        sql = """UPDATE paises SET deleted = 1 WHERE id_pais = %s"""
         cursor.execute(sql, (id_pais,))
         conexion.commit()
         print("\nPais eliminado correctamente.")
