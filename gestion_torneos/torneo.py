@@ -29,7 +29,6 @@ class Torneo:
             JOIN tipo_usuarios t ON u.tipo_usuario_id = t.id_tipo_usuario
             WHERE u.id_usuario = %s AND u.deleted = 0
         """, (self.organizador_id,))
-        
         organizador = cursor.fetchone()
         
         if not organizador:
@@ -82,8 +81,7 @@ class Torneo:
         
         print("\n\nTORNEOS\n")
         for t in torneos:
-            ciudad_nombre = t[4] if t[4] else "Sin ciudad"
-            print(f"ID: {t[0]} | Torneo: {t[1]} | Juego: {t[2]} | Ciudad: {ciudad_nombre}")
+            print(f"ID: {t[0]} | Torneo: {t[1]} | Juego: {t[2]} | Ciudad: {t[4]}")
         
         cursor.close()
         conexion.close()
