@@ -13,50 +13,80 @@ class Usuario:
         self.tipo_usuario_id = tipo_usuario_id
     
     def guardar(self):
-        # Guarda un nuevo usuario en la base de datos
+        # Metodo: INSERT en BD
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Validar que la ciudad existe
-        cursor.execute("SELECT id_ciudad FROM ciudades WHERE id_ciudad = %s AND deleted = 0", (self.ciudad_id,))
+        # Estructura de control: validacion campos vacios
+        if not self.nombre_completo or self.nombre_completo.strip() == "":
+            print("\nEl nombre completo no puede estar vacio.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        if not self.email or self.email.strip() == "":
+            print("\nEl email no puede estar vacio.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        # Estructura de control: validacion formato email
+        if "@" not in self.email or "." not in self.email:
+            print("\nEl email no es valido. Debe contener @ y .")
+            cursor.close()
+            conexion.close()
+            return
+        
+        if not self.username or self.username.strip() == "":
+            print("\nEl username no puede estar vacio.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        # Estructura de control: validacion existencia ciudad
+        sql = """SELECT id_ciudad FROM ciudades WHERE id_ciudad = %s AND deleted = 0"""
+        cursor.execute(sql, (self.ciudad_id,))
         if not cursor.fetchone():
             print("\nLa ciudad no existe. Primero debes crear la ciudad.")
             cursor.close()
             conexion.close()
             return
         
-        # Validar que el tipo de usuario existe
-        cursor.execute("SELECT id_tipo_usuario FROM tipo_usuarios WHERE id_tipo_usuario = %s AND deleted = 0", (self.tipo_usuario_id,))
+        # Estructura de control: validacion existencia tipo usuario
+        sql = """SELECT id_tipo_usuario FROM tipo_usuarios WHERE id_tipo_usuario = %s AND deleted = 0"""
+        cursor.execute(sql, (self.tipo_usuario_id,))
         if not cursor.fetchone():
             print("\nEl tipo de usuario no existe. Primero debes crear el tipo.")
             cursor.close()
             conexion.close()
             return
         
-        # Validar email unico
-        cursor.execute("SELECT id_usuario FROM usuarios WHERE email = %s AND deleted = 0", (self.email,))
+        # Estructura de control: validacion email unico
+        sql = """SELECT id_usuario FROM usuarios WHERE email = %s AND deleted = 0"""
+        cursor.execute(sql, (self.email,))
         if cursor.fetchone():
             print("\nEl email ya esta registrado.")
             cursor.close()
             conexion.close()
             return
         
-        # Validar username unico
-        cursor.execute("SELECT id_usuario FROM usuarios WHERE username = %s AND deleted = 0", (self.username,))
+        # Estructura de control: validacion username unico
+        sql = """SELECT id_usuario FROM usuarios WHERE username = %s AND deleted = 0"""
+        cursor.execute(sql, (self.username,))
         if cursor.fetchone():
             print("\nEl username ya existe. Elige otro.")
             cursor.close()
             conexion.close()
             return
         
-        # Validar edad minima
+        # Estructura de control: validacion edad minima
         if self.edad < 16:
             print("\nLa edad debe ser mayor o igual a 16 años.")
             cursor.close()
             conexion.close()
             return
         
-        # Insertar usuario
+        # INSERT
         sql = """
             INSERT INTO usuarios (nombre_completo, email, username, ciudad_id, edad, tipo_usuario_id, created_by)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -70,7 +100,7 @@ class Usuario:
     
     @staticmethod
     def listar():
-        # Lista todos los usuarios con sus datos completos
+        # Metodo estatico: SELECT con JOIN
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -85,19 +115,22 @@ class Usuario:
         usuarios = cursor.fetchall()
         
         print("\n===== USUARIOS =====")
+        # Bucle for: recorre resultados
         for u in usuarios:
-            print(f"ID: {u[0]} | {u[1]} | @{u[2]} | Ciudad: {u[4]} | Edad: {u[5]} | Tipo: {u[6]}")
+            ciudad_nombre = u[4] if u[4] else "Sin ciudad"
+            tipo_nombre = u[6] if u[6] else "Sin tipo"
+            print(f"ID: {u[0]} | {u[1]} | @{u[2]} | Ciudad: {ciudad_nombre} | Edad: {u[5]} | Tipo: {tipo_nombre}")
         
         cursor.close()
         conexion.close()
     
     @staticmethod
     def listar_simple():
-        # Lista usuarios en formato simple (para selects)
+        # Metodo estatico: SELECT formato simple
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = "SELECT id_usuario, nombre_completo, username FROM usuarios WHERE deleted = 0"
+        sql = """SELECT id_usuario, nombre_completo, username FROM usuarios WHERE deleted = 0"""
         cursor.execute(sql)
         usuarios = cursor.fetchall()
         
@@ -110,20 +143,40 @@ class Usuario:
     
     @staticmethod
     def agregar():
-        # Interfaz para agregar un nuevo usuario
+        # Interfaz: input usuario
         print("\n===== NUEVO USUARIO =====")
         
         print("\nCIUDADES DISPONIBLES")
         Ciudad.listar()
-        ciudad_id = input("\nID de la ciudad: ")
+        ciudad_id = int(input("\nID de la ciudad: "))
         
         print("\nTIPOS DE USUARIO DISPONIBLES")
         TipoUsuario.listar()
-        tipo_id = input("\nID del tipo de usuario: ")
+        tipo_id = int(input("\nID del tipo de usuario: "))
         
         nombre = input("Nombre completo: ")
+        
+        # Estructura de control: valida entrada
+        if not nombre or nombre.strip() == "":
+            print("\nEl nombre no puede estar vacio.")
+            return
+        
         email = input("Email: ")
+        
+        if not email or email.strip() == "":
+            print("\nEl email no puede estar vacio.")
+            return
+        
+        if "@" not in email or "." not in email:
+            print("\nEl email no es valido.")
+            return
+        
         username = input("Username: ")
+        
+        if not username or username.strip() == "":
+            print("\nEl username no puede estar vacio.")
+            return
+        
         edad = int(input("Edad: "))
         
         usuario_obj = Usuario(nombre, email, username, edad, ciudad_id, tipo_id)
@@ -131,17 +184,18 @@ class Usuario:
     
     @staticmethod
     def actualizar():
-        # Actualiza el email de un usuario
+        # Interfaz: UPDATE email
         Usuario.listar_simple()
         
-        id_usuario = input("\nIngrese ID del usuario: ")
+        id_usuario = int(input("\nIngrese ID del usuario: "))
         nuevo_email = input("Ingrese nuevo email: ")
         
+        # Estructura de control: valida formato email
         if "@" in nuevo_email and "." in nuevo_email:
             conexion = Conexion.conectar()
             cursor = conexion.cursor()
             
-            sql = "UPDATE usuarios SET email = %s WHERE id_usuario = %s"
+            sql = """UPDATE usuarios SET email = %s WHERE id_usuario = %s"""
             cursor.execute(sql, (nuevo_email, id_usuario))
             conexion.commit()
             print("\nEmail actualizado correctamente.")
@@ -149,31 +203,33 @@ class Usuario:
             cursor.close()
             conexion.close()
         else:
-            print("\nEmail no valido")
+            print("\nEmail no valido. Debe contener @ y .")
     
     @staticmethod
     def cambiar_ciudad():
-        # Cambia la ciudad de un usuario
+        # Interfaz: UPDATE ciudad_id
         Usuario.listar_simple()
         
-        id_usuario = input("\nIngrese ID del usuario: ")
+        id_usuario = int(input("\nIngrese ID del usuario: "))
         
         print("\nCIUDADES DISPONIBLES")
         Ciudad.listar()
-        nueva_ciudad_id = input("ID de la nueva ciudad: ")
+        nueva_ciudad_id = int(input("ID de la nueva ciudad: "))
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Validar que la ciudad existe
-        cursor.execute("SELECT id_ciudad FROM ciudades WHERE id_ciudad = %s AND deleted = 0", (nueva_ciudad_id,))
+        # Estructura de control: valida existencia ciudad
+        sql = """SELECT id_ciudad FROM ciudades WHERE id_ciudad = %s AND deleted = 0"""
+        cursor.execute(sql, (nueva_ciudad_id,))
         if not cursor.fetchone():
             print("\nLa ciudad no existe.")
             cursor.close()
             conexion.close()
             return
         
-        sql = "UPDATE usuarios SET ciudad_id = %s WHERE id_usuario = %s"
+        # UPDATE
+        sql = """UPDATE usuarios SET ciudad_id = %s WHERE id_usuario = %s"""
         cursor.execute(sql, (nueva_ciudad_id, id_usuario))
         conexion.commit()
         print("\nCiudad del usuario actualizada correctamente.")
@@ -183,27 +239,29 @@ class Usuario:
     
     @staticmethod
     def cambiar_tipo():
-        # Cambia el tipo de usuario
+        # Interfaz: UPDATE tipo_usuario_id
         Usuario.listar_simple()
         
-        id_usuario = input("\nIngrese ID del usuario: ")
+        id_usuario = int(input("\nIngrese ID del usuario: "))
         
         print("\nTIPOS DE USUARIO DISPONIBLES")
         TipoUsuario.listar()
-        nuevo_tipo_id = input("ID del nuevo tipo: ")
+        nuevo_tipo_id = int(input("ID del nuevo tipo: "))
         
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Validar que el tipo existe
-        cursor.execute("SELECT id_tipo_usuario FROM tipo_usuarios WHERE id_tipo_usuario = %s AND deleted = 0", (nuevo_tipo_id,))
+        # Estructura de control: valida existencia tipo
+        sql = """SELECT id_tipo_usuario FROM tipo_usuarios WHERE id_tipo_usuario = %s AND deleted = 0"""
+        cursor.execute(sql, (nuevo_tipo_id,))
         if not cursor.fetchone():
             print("\nEl tipo de usuario no existe.")
             cursor.close()
             conexion.close()
             return
         
-        sql = "UPDATE usuarios SET tipo_usuario_id = %s WHERE id_usuario = %s"
+        # UPDATE
+        sql = """UPDATE usuarios SET tipo_usuario_id = %s WHERE id_usuario = %s"""
         cursor.execute(sql, (nuevo_tipo_id, id_usuario))
         conexion.commit()
         print("\nTipo de usuario actualizado correctamente.")
@@ -213,9 +271,10 @@ class Usuario:
     
     @staticmethod
     def validar_edad():
-        # Valida si una edad cumple el requisito minimo
+        # Metodo estatico: validacion edad minima
         edad = int(input("Ingrese edad: "))
         
+        # Estructura de control: if-else
         if edad >= 16:
             print(f"\nEdad {edad} valida para participar.")
         else:
@@ -223,14 +282,16 @@ class Usuario:
     
     @staticmethod
     def eliminar():
-        # Elimina logicamente un usuario
+        # Interfaz: DELETE logico
         Usuario.listar_simple()
         
-        id_usuario = input("\nIngrese ID del usuario: ")
+        id_usuario = int(input("\nIngrese ID del usuario: "))
+        
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = "UPDATE usuarios SET deleted = 1 WHERE id_usuario = %s"
+        # UPDATE logico
+        sql = """UPDATE usuarios SET deleted = 1 WHERE id_usuario = %s"""
         cursor.execute(sql, (id_usuario,))
         conexion.commit()
         print("\nUsuario eliminado correctamente.")

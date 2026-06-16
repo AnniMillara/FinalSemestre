@@ -8,11 +8,18 @@ class Ciudad:
         self.pais_id = pais_id
     
     def guardar(self):
-        # Guarda una nueva ciudad en la base de datos
+        # Metodo: INSERT en BD
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Verificar que el pais existe
+        # Estructura de control: valida campo vacio
+        if not self.nombre_ciudad or self.nombre_ciudad.strip() == "":
+            print("\nEl nombre de la ciudad no puede estar vacio.")
+            cursor.close()
+            conexion.close()
+            return
+        
+        # Estructura de control: verifica existencia del pais
         if not Pais.existe(self.pais_id):
             print(f"\nEl pais con ID {self.pais_id} no existe.")
             print("Primero debes crear el pais.")
@@ -20,11 +27,9 @@ class Ciudad:
             conexion.close()
             return
         
-        # Verificar que la ciudad no existe ya en ese pais
-        cursor.execute("""
-            SELECT id_ciudad FROM ciudades 
-            WHERE nombre_ciudad = %s AND pais_id = %s AND deleted = 0
-        """, (self.nombre_ciudad, self.pais_id))
+        # Estructura de control: verifica duplicado
+        sql = """SELECT id_ciudad FROM ciudades WHERE nombre_ciudad = %s AND pais_id = %s AND deleted = 0"""
+        cursor.execute(sql, (self.nombre_ciudad, self.pais_id))
         
         if cursor.fetchone():
             print(f"\nLa ciudad '{self.nombre_ciudad}' ya existe en este pais.")
@@ -32,16 +37,14 @@ class Ciudad:
             conexion.close()
             return
         
-        # Insertar nueva ciudad
-        sql = """
-            INSERT INTO ciudades (nombre_ciudad, pais_id, created_by)
-            VALUES (%s, %s, %s)
-        """
+        # INSERT
+        sql = """INSERT INTO ciudades (nombre_ciudad, pais_id, created_by) VALUES (%s, %s, %s)"""
         cursor.execute(sql, (self.nombre_ciudad, self.pais_id, "system"))
         conexion.commit()
         
-        # Obtener nombre del pais para el mensaje
-        cursor.execute("SELECT nombre_pais FROM paises WHERE id_pais = %s", (self.pais_id,))
+        # SELECT para mensaje
+        sql = """SELECT nombre_pais FROM paises WHERE id_pais = %s"""
+        cursor.execute(sql, (self.pais_id,))
         nombre_pais = cursor.fetchone()[0]
         
         print(f"\nCiudad '{self.nombre_ciudad}' agregada correctamente en {nombre_pais}.")
@@ -51,7 +54,7 @@ class Ciudad:
     
     @staticmethod
     def listar():
-        # Lista todas las ciudades agrupadas por pais
+        # Metodo estatico: SELECT con JOIN
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
@@ -67,6 +70,7 @@ class Ciudad:
         
         print("\n===== CIUDADES =====")
         
+        # Bucle for: agrupacion por pais
         pais_actual = None
         for ciudad in ciudades:
             if ciudad[2] != pais_actual:
@@ -79,16 +83,11 @@ class Ciudad:
     
     @staticmethod
     def listar_por_pais(pais_id):
-        # Lista ciudades de un pais especifico
+        # Metodo estatico: SELECT filtrado por pais
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = """
-            SELECT id_ciudad, nombre_ciudad
-            FROM ciudades
-            WHERE pais_id = %s AND deleted = 0
-            ORDER BY nombre_ciudad
-        """
+        sql = """SELECT id_ciudad, nombre_ciudad FROM ciudades WHERE pais_id = %s AND deleted = 0 ORDER BY nombre_ciudad"""
         cursor.execute(sql, (pais_id,))
         ciudades = cursor.fetchall()
         
@@ -98,25 +97,32 @@ class Ciudad:
     
     @staticmethod
     def agregar():
-        # Interfaz para agregar una nueva ciudad
+        # Interfaz: input usuario
         print("\n===== NUEVA CIUDAD =====")
         
         Pais.listar_simple()
         
         pais_id = int(input("\nID del pais: "))
         
+        # Estructura de control: valida existencia del pais
         if not Pais.existe(pais_id):
             print("\nEl pais no existe.")
             return
         
         nombre = input("Nombre de la ciudad: ")
         
-        nueva_ciudad = Ciudad(nombre, pais_id)
-        nueva_ciudad.guardar()
+        # Estructura de control: valida campo vacio
+        if not nombre or nombre.strip() == "":
+            print("\nEl nombre de la ciudad no puede estar vacio.")
+            return
+        
+        if Ciudad.existe():
+            nueva_ciudad = Ciudad(nombre, pais_id)
+            nueva_ciudad.guardar()
     
     @staticmethod
     def eliminar():
-        # Elimina logicamente una ciudad (verifica que no tenga usuarios asociados)
+        # Interfaz: DELETE logico
         Ciudad.listar()
         
         id_ciudad = int(input("\nIngrese ID de la ciudad a eliminar: "))
@@ -124,19 +130,19 @@ class Ciudad:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        # Verificar si la ciudad tiene usuarios asociados
-        cursor.execute("SELECT COUNT(*) FROM usuarios WHERE ciudad_id = %s AND deleted = 0", (id_ciudad,))
-        total_usuarios = cursor.fetchone()[0]
+        # Estructura de control: verifica usuarios asociados
+        sql = """SELECT id_usuario FROM usuarios WHERE ciudad_id = %s AND deleted = 0 LIMIT 1"""
+        cursor.execute(sql, (id_ciudad,))
         
-        if total_usuarios > 0:
-            print(f"\nNo se puede eliminar la ciudad. Tiene {total_usuarios} usuarios asociados.")
+        if cursor.fetchone():
+            print("\nNo se puede eliminar la ciudad. Tiene usuarios asociados.")
             print("Primero reasigne o elimine los usuarios de esta ciudad.")
             cursor.close()
             conexion.close()
             return
         
-        # Eliminacion logica
-        sql = "UPDATE ciudades SET deleted = 1 WHERE id_ciudad = %s"
+        # UPDATE logico
+        sql = """UPDATE ciudades SET deleted = 1 WHERE id_ciudad = %s"""
         cursor.execute(sql, (id_ciudad,))
         conexion.commit()
         print("\nCiudad eliminada correctamente.")
