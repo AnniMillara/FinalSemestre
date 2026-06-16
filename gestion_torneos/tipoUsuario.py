@@ -121,6 +121,14 @@ class TipoUsuario:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        sql = """SELECT id_tipo_usuario FROM tipo_usuarios WHERE id_tipo_usuario = %s AND deleted = 0"""
+        cursor.execute(sql, (id_tipo,))
+        if not cursor.fetchone():
+            print("\nEl tipo de usuario no existe.")
+            cursor.close()
+            conexion.close()
+            return
+        
         # Estructura de control: verifica usuarios asociados
         sql = """SELECT id_usuario FROM usuarios WHERE tipo_usuario_id = %s AND deleted = 0 LIMIT 1"""
         cursor.execute(sql, (id_tipo,))
