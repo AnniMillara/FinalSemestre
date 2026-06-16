@@ -121,6 +121,17 @@ class TipoUsuario:
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
+        # Estructura de control: verifica usuarios asociados
+        sql = """SELECT id_usuario FROM usuarios WHERE tipo_usuario_id = %s AND deleted = 0 LIMIT 1"""
+        cursor.execute(sql, (id_tipo,))
+        
+        if cursor.fetchone():
+            print("\nNo se puede eliminar el tipo. Tiene usuarios asociados.")
+            print("Primero elimine o cambie los usuarios de este tipo.")
+            cursor.close()
+            conexion.close()
+            return
+        
         # UPDATE logico
         sql = """UPDATE tipo_usuarios SET deleted = 1 WHERE id_tipo_usuario = %s"""
         cursor.execute(sql, (id_tipo,))
