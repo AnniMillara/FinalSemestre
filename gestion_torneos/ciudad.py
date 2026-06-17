@@ -116,9 +116,8 @@ class Ciudad:
             print("\nEl nombre de la ciudad no puede estar vacio.")
             return
         
-        if Ciudad.existe():
-            nueva_ciudad = Ciudad(nombre, pais_id)
-            nueva_ciudad.guardar()
+        nueva_ciudad = Ciudad(nombre, pais_id)
+        nueva_ciudad.guardar()
     
     @staticmethod
     def eliminar():
